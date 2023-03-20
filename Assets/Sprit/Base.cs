@@ -30,6 +30,7 @@ namespace GameBase
 	{
 		public float power;
 		public float load;
+		
 	}
 
 	/// <summary>
@@ -56,6 +57,10 @@ namespace GameBase
 		private EnergyNet fatherEngrgy;
 		private Inventory invent = null;
 
+		/// <summary>
+		/// ªÒ»°IP
+		/// </summary>
+		/// <returns></returns>
 		public string GetIP()
 		{
 			if (fatherLogist == null)

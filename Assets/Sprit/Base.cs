@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Manager;
 
 namespace GameBase
 {
@@ -30,7 +31,7 @@ namespace GameBase
 	{
 		public float power;
 		public float load;
-		
+
 	}
 
 	/// <summary>
@@ -46,7 +47,6 @@ namespace GameBase
 		public int Count { get { return count; } }
 		public int MaxCount { get { return maxCount; } }
 	}
-
 	/// <summary>
 	/// 建筑基类
 	/// </summary>
@@ -54,8 +54,16 @@ namespace GameBase
 	{
 		private int localip;
 		private LogistNet fatherLogist = null;
-		private EnergyNet fatherEngrgy;
+		private EnergyNet fatherEngrgy = null;
 		private Inventory invent = null;
+
+		public void Start()
+		{
+			if (BulidManager.Instend != null)
+			{
+				BulidManager.BuildList.Add(this);
+			}
+		}
 
 		/// <summary>
 		/// 获取IP

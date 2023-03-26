@@ -41,14 +41,6 @@ namespace GameBase
 		}
 	}
 
-    ///<summary>
-    ///建筑规划
-    ///</summary>
-    public class BuildProject : Block
-    {
-
-    }
-
 	///<summary>
 	///物流管道
 	/// </summary>

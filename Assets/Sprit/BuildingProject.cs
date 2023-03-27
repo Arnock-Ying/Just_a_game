@@ -10,11 +10,11 @@ using GameBase;
 public class BuildingProject : Block
 {
 
-    private Vector3 size;
+    //private Vector3 size;
     BuildingProject(GameObject prefab)
     {
-        size = prefab.transform.GetComponent<Collider>().bounds.size;
-        Debug.Log(size);
+        //size = prefab.transform.GetComponent<Collider>().bounds.size;
+        //Debug.Log(size);
     }
     BuildingProject() { }
 

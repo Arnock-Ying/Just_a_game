@@ -9,7 +9,7 @@ namespace Manager
 	{
 		public List<BaseBuild> baseBuilds = new();
 
-		private static BulidManager instend=null;
+		private static BulidManager instend = null;
 		public static BulidManager Instend { get { return instend; } }
 		public static List<BaseBuild> BuildList { get { return instend.baseBuilds; } }
 		public void Awake()

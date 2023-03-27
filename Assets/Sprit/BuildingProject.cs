@@ -9,24 +9,27 @@ using GameBase;
 ///</summary>
 public class BuildingProject : Block
 {
+	private Block projecting;
+	private BoxCollider2D coll;
+	public void SetProject(GameObject prefab)
+	{
+		projecting = prefab.GetComponent<Block>();
+		if (!projecting) return;
+		coll.size = prefab.GetComponent<BoxCollider2D>().size;
 
-    private Vector3 size;
-    BuildingProject(GameObject prefab)
-    {
-        size = prefab.transform.GetComponent<Collider>().bounds.size;
-        Debug.Log(size);
-    }
-    BuildingProject() { }
+		Debug.Log(coll.size);
+	}
 
-    private void Start()
-    {
+	private void Start()
+	{
+		coll = GetComponent<BoxCollider2D>();
+		if (!coll) coll = gameObject.AddComponent<BoxCollider2D>();
+	}
 
-    }
+	private void Update()
+	{
 
-    private void Update()
-    {
-
-    }
+	}
 
 }
 

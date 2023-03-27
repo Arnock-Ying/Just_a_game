@@ -7,6 +7,7 @@ using GameBase;
 
 public class Base : BaseBuild
 {
+
     void Start()
     {
         var col = gameObject.GetComponent<BoxCollider>();

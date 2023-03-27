@@ -360,6 +360,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2bbe389bc9716884ea9537743bfe076c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  temp: {x: 0, y: 0}
+  pos: {x: 0, y: 0, z: 0}
+  last_button: {fileID: 0}
+  selected_prefab: {fileID: 0}
+  now_holding: {fileID: 0}
 --- !u!81 &458766343
 AudioListener:
   m_ObjectHideFlags: 0
@@ -437,6 +442,7 @@ GameObject:
   - component: {fileID: 458766345}
   - component: {fileID: 458766344}
   - component: {fileID: 458766343}
+  - component: {fileID: 519420029}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -444,6 +450,20 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &519420029
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 519420028}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 41a66a031c96c6849a3ae1bf7f086c87, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  pos_temp: {x: 0, y: 0}
+  mouse_pos_last: {x: 0, y: 0, z: 0}
 --- !u!1 &1094030978
 GameObject:
   m_ObjectHideFlags: 0

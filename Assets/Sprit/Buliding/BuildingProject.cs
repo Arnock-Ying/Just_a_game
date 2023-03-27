@@ -55,7 +55,6 @@ public class BuildingProject : Block
 
 	private void OnTriggerEnter2D(Collider2D other)
 	{
-		Debug.Log(other.tag);
 		if (isholding)
 		{
 			if (other.tag == "Building")
@@ -68,7 +67,6 @@ public class BuildingProject : Block
 
 	private void OnTriggerStay2D(Collider2D collision)
 	{
-		Debug.Log(collision.tag);
 		if (isholding)
 		{
 			if (collision.tag == "Building")

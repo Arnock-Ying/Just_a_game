@@ -224,7 +224,7 @@ MonoBehaviour:
         m_MethodName: SelectPrefab
         m_Mode: 2
         m_Arguments:
-          m_ObjectArgument: {fileID: 4037087733788533670, guid: ac17198846c3a424bb09452f60d49b44, type: 3}
+          m_ObjectArgument: {fileID: 3223817165465878641, guid: 3bc6e17d7f7aee449a797535a88b447c, type: 3}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.GameObject, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0

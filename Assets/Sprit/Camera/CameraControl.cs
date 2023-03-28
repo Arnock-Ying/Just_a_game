@@ -2,12 +2,12 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Move : MonoBehaviour
+public class CameraControl : MonoBehaviour
 {
     Camera cam;
-    [SerializeField]
+    //[SerializeField]
     private Vector2 pos_temp;
-    [SerializeField]
+    //[SerializeField]
     private Vector3 mouse_pos_last;
     bool moving;
 
@@ -18,13 +18,13 @@ public class Move : MonoBehaviour
 
     private void Update()
     {
-        if (Input.GetMouseButtonDown(1))
+        if (Input.GetMouseButtonDown(1) || Input.GetMouseButtonDown(2))
         {
             moving = true;
             pos_temp = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             mouse_pos_last = new Vector3(pos_temp.x, pos_temp.y, -10);
         }
-        if (Input.GetMouseButtonUp(1))
+        if (Input.GetMouseButtonUp(1) || Input.GetMouseButtonUp(2))
         {
             moving = false;
         }

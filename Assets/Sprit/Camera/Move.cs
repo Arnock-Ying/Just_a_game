@@ -15,7 +15,7 @@ public class Move : MonoBehaviour
     {
         cam = gameObject.GetComponent<Camera>();
     }
-    
+
     private void Update()
     {
         if (Input.GetMouseButtonDown(1))
@@ -35,6 +35,22 @@ public class Move : MonoBehaviour
 
             pos_temp = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             mouse_pos_last = new Vector3(pos_temp.x, pos_temp.y, -10);
+        }
+        //鼠标滚轮的效果
+        if (Input.GetAxis("Mouse ScrollWheel") < 0)
+        {
+            if (Camera.main.fieldOfView <= 100)
+                Camera.main.fieldOfView += 2;
+            if (Camera.main.orthographicSize <= 20)
+                Camera.main.orthographicSize += 0.5F;
+        }
+        //Zoom in
+        if (Input.GetAxis("Mouse ScrollWheel") > 0)
+        {
+            if (Camera.main.fieldOfView > 2)
+                Camera.main.fieldOfView -= 2;
+            if (Camera.main.orthographicSize >= 1)
+                Camera.main.orthographicSize -= 0.5F;
         }
     }
 }

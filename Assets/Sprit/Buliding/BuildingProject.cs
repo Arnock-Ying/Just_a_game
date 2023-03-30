@@ -16,6 +16,7 @@ public class BuildingProject : Block
     private Rigidbody2D rb;
     private SpriteRenderer spr;
 
+    Vector3 mouse_pos = new Vector3(0, 0, -999);
     private bool isholding;
     private bool collding;
     public void SetProject(GameObject prefab)
@@ -63,6 +64,19 @@ public class BuildingProject : Block
             {
                 spr.color = new Color(0.5f, 1, 0.5f, 0.5f);
                 collding = false;
+            }
+        }
+        else if (!EventSystem.current.IsPointerOverGameObject())
+        {
+            if (Input.GetMouseButtonDown(1))
+            {
+                mouse_pos = Input.mousePosition;
+                //Debug.Log(mouse_pos);
+            }
+            if (Input.GetMouseButtonUp(1) && Input.mousePosition == mouse_pos)
+            {
+                //Debug.Log(mouse_pos);
+                //Destroy(this);
             }
         }
     }

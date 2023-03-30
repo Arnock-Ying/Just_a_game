@@ -48,6 +48,7 @@ public class Construction : MonoBehaviour
 		}
 	}
 
+
 	public void ButtonAnimationKeep(Button button)
 	{
 		ColorBlock cb = button.colors;

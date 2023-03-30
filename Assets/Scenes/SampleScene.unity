@@ -457,6 +457,76 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 41a66a031c96c6849a3ae1bf7f086c87, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!1 &990138280
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 990138284}
+  - component: {fileID: 990138283}
+  - component: {fileID: 990138282}
+  - component: {fileID: 990138281}
+  m_Layer: 0
+  m_Name: GameManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &990138281
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 990138280}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 578dbd43e3aee06419ba827800559020, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &990138282
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 990138280}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1a08e191cc027b94d9cce84fe7471476, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &990138283
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 990138280}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1e3cc453e4dc98f4389a56f4bd6eb7b2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!4 &990138284
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 990138280}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 3.3528135, y: 2.5212865, z: -1.1793905}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 6
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1094030978
 GameObject:
   m_ObjectHideFlags: 0
@@ -942,14 +1012,6 @@ PrefabInstance:
     - target: {fileID: 2678064483287967858, guid: bb325739c27b6c6489441bc3c3704c28, type: 3}
       propertyPath: m_Name
       value: Tree
-      objectReference: {fileID: 0}
-    - target: {fileID: 2678064483287967858, guid: bb325739c27b6c6489441bc3c3704c28, type: 3}
-      propertyPath: m_TagString
-      value: Mineral
-      objectReference: {fileID: 0}
-    - target: {fileID: 2678064483287967858, guid: bb325739c27b6c6489441bc3c3704c28, type: 3}
-      propertyPath: m_StaticEditorFlags
-      value: 2147483647
       objectReference: {fileID: 0}
     - target: {fileID: 2678064483287967862, guid: bb325739c27b6c6489441bc3c3704c28, type: 3}
       propertyPath: m_RootOrder

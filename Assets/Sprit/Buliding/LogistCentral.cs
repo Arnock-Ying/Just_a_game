@@ -3,21 +3,23 @@ using System.Collections.Generic;
 using UnityEngine;
 
 using GameBase;
+using Manager;
 
 public class LogistCentral : BaseBuild
 {
-    private LogistNet managedlogist;
-    private SpriteRenderer spriteRenderer;
+	private LogistNet managedlogist;
+	private SpriteRenderer spriteRenderer;
 
-    void Start()
-    {
-        var col = gameObject.GetComponent<BoxCollider>();
-        spriteRenderer = GetComponent<SpriteRenderer>();
-    }
+	void Start()
+	{
+		MapManager.SetBuild(transform.position, size, this);
+		var col = gameObject.GetComponent<BoxCollider>();
+		spriteRenderer = GetComponent<SpriteRenderer>();
+	}
 
-    void Update()
-    {
+	void Update()
+	{
 
-    }
+	}
 
 }

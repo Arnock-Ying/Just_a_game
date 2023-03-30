@@ -17,11 +17,17 @@ namespace Manager
 		}
 		public Block GetBlock(int x, int y)
 		{
+			if (x < 0) x = 255 + x;
+			if (y < 0) y = 255 + y;
+			//Debug.Log("getblock:" + x + y + blocks[x, y]);
 			return blocks[x, y];
 		}
 
 		public void SetBlock(int x, int y, Block block)
 		{
+			if (x < 0) x = 255 + x;
+			if (y < 0) y = 255 + y;
+			//Debug.Log("setblock:" + x + y + block);
 			blocks[x, y] = block;
 		}
 	}

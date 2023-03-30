@@ -19,12 +19,37 @@ namespace Manager
 				return instend.blockList[new Vector2Int(Mathf.FloorToInt(x / 256), Mathf.FloorToInt(y / 256))].GetBlock(x % 256, y % 256);
 			else return null;
 		}
-
+		public static Block GetBlock(Vector2Int v)
+		{
+			return GetBlock(v.x, v.y);
+		}
 		public static void SetBlock(int x, int y, Block block)
 		{
 			if (!instend.blockList.ContainsKey(new Vector2Int(Mathf.FloorToInt(x / 256), Mathf.FloorToInt(y / 256))))
 				instend.blockList[new Vector2Int(Mathf.FloorToInt(x / 256), Mathf.FloorToInt(y / 256))] = new();
 			instend.blockList[new Vector2Int(Mathf.FloorToInt(x / 256), Mathf.FloorToInt(y / 256))].SetBlock(x % 256, y % 256, block);
+		}
+		public static void SetBlock(Vector2Int v, Block block)
+		{
+			SetBlock(v.x, v.y, block);
+		}
+
+		public static void SetBuild(Vector2 pos, Vector2Int size, Block block)
+		{
+			Vector2Int posInt = new Vector2Int(Mathf.FloorToInt(pos.x), Mathf.FloorToInt(pos.y));
+			for (int i = posInt.x - size.x / 2; i < posInt.x + Mathf.CeilToInt(size.x / 2.0f); ++i)
+				for (int j = posInt.y - size.y / 2; j < posInt.y + Mathf.CeilToInt(size.y / 2.0f); ++j)
+					SetBlock(i, j, block);
+
+		}
+		public static bool GetBuild(Vector2 pos, Vector2Int size)
+		{
+			Vector2Int posInt = new Vector2Int(Mathf.FloorToInt(pos.x), Mathf.FloorToInt(pos.y));
+			for (int i = posInt.x - size.x / 2; i < posInt.x + Mathf.CeilToInt(size.x / 2.0f); ++i)
+				for (int j = posInt.y - size.y / 2; j < posInt.y + Mathf.CeilToInt(size.y / 2.0f); ++j)
+					if (GetBlock(i, j))
+						return true;
+			return false;
 		}
 		public void Awake()
 		{

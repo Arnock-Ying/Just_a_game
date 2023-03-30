@@ -21,15 +21,13 @@ public class Construction : MonoBehaviour
 	GameObject now_holding = null;
 	Block selected_block = null;
 
-	void Start()
-	{
-	}
 	void Update()
 	{
 		if (selected_prefab)
 		{
 			temp = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-			pos = new Vector3(Mathf.Floor(temp.x + 0.5f), Mathf.Floor(temp.y + 0.5f), -1);
+			bool a = (selected_block.size.x & 1) == 0, b = (selected_block.size.y & 1) == 0;
+			pos = new Vector3(Mathf.Floor(temp.x + (a ? 0.5f : 0))+ (!a ? 0.5f : 0), Mathf.Floor(temp.y + (b ? 0.5f : 0))+ (!b ? 0.5f : 0), -1);
 			now_holding.transform.position = pos;
 			if (Input.GetMouseButtonDown(1))
 			{

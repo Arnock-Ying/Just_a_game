@@ -20,6 +20,7 @@ public class Construction : MonoBehaviour
 
     void Start()
     {
+
     }
     void Update()
     {

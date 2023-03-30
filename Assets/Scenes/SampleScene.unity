@@ -282,7 +282,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8627703375985265708, guid: bab0dc940dac35844999326f4eb7c21a, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -6.5
+      value: -8.5
       objectReference: {fileID: 0}
     - target: {fileID: 8627703375985265708, guid: bab0dc940dac35844999326f4eb7c21a, type: 3}
       propertyPath: m_LocalPosition.y
@@ -601,11 +601,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6710358784831946264, guid: c6bd9cb68ab50de418acb335eddf9dd0, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -5.5
+      value: -7.5
       objectReference: {fileID: 0}
     - target: {fileID: 6710358784831946264, guid: c6bd9cb68ab50de418acb335eddf9dd0, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -1.5
+      value: -2.5
       objectReference: {fileID: 0}
     - target: {fileID: 6710358784831946264, guid: c6bd9cb68ab50de418acb335eddf9dd0, type: 3}
       propertyPath: m_LocalPosition.z
@@ -923,7 +923,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2678064483287967862, guid: bb325739c27b6c6489441bc3c3704c28, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.5
+      value: -0.51
       objectReference: {fileID: 0}
     - target: {fileID: 2678064483287967862, guid: bb325739c27b6c6489441bc3c3704c28, type: 3}
       propertyPath: m_LocalPosition.z
@@ -976,11 +976,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2678064483287967862, guid: bb325739c27b6c6489441bc3c3704c28, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -5.5
+      value: -6.5
       objectReference: {fileID: 0}
     - target: {fileID: 2678064483287967862, guid: bb325739c27b6c6489441bc3c3704c28, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.5
+      value: 1.5
       objectReference: {fileID: 0}
     - target: {fileID: 2678064483287967862, guid: bb325739c27b6c6489441bc3c3704c28, type: 3}
       propertyPath: m_LocalPosition.z
@@ -1294,14 +1294,6 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 3661061880047143624, guid: b2e7f294347de2c46b696ffc905a3480, type: 3}
-      propertyPath: Mines.Array.size
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 3661061880047143624, guid: b2e7f294347de2c46b696ffc905a3480, type: 3}
-      propertyPath: Mines.Array.data[1]
-      value: stone
-      objectReference: {fileID: 0}
     - target: {fileID: 3661061880047143627, guid: b2e7f294347de2c46b696ffc905a3480, type: 3}
       propertyPath: m_Name
       value: Logging_station

@@ -47,10 +47,10 @@ namespace GameBase
 	///<summary>
 	///物流管道
 	/// </summary>
-	public class LogistPipe : Block
-	{
+	//public class LogistPipe : Block
+	//{
 
-	}
+	//}
 
 	///<summary>
 	///能量管道

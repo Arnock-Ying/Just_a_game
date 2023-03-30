@@ -50,10 +50,7 @@ public class BuildingProject : Block
 
     private void Update()
     {
-        //      if (Input.GetMouseButton(0))
-        //      {
-        //	MouseStay();
-        //}
+        
     }
 
     private void OnTriggerEnter2D(Collider2D other)

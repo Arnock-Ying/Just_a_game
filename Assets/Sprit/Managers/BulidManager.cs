@@ -7,7 +7,7 @@ namespace Manager
 {
 	public class BulidManager : MonoBehaviour
 	{
-		public List<BaseBuild> baseBuilds = new();
+		private List<BaseBuild> baseBuilds = new();
 
 		private static BulidManager instend = null;
 		public static BulidManager Instend { get { return instend; } }

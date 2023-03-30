@@ -14,10 +14,11 @@ namespace Manager
 		public static MapManager Instend { get { return instend; } }
 		public static Dictionary<Vector2Int, BlockControl> Blocks { get { return instend.blockList; } }
 		public static Block GetBlock(int x, int y)
-		{
-			if (instend.blockList.ContainsKey(new Vector2Int(Mathf.FloorToInt(x / 256), Mathf.FloorToInt(y / 256))))
-				return instend.blockList[new Vector2Int(Mathf.FloorToInt(x / 256), Mathf.FloorToInt(y / 256))].GetBlock(x % 256, y % 256);
+		{ 
+			if (instend.blockList.ContainsKey(new Vector2Int(Mathf.FloorToInt(x / 256.0f), Mathf.FloorToInt(y / 256.0f))))
+				return instend.blockList[new Vector2Int(Mathf.FloorToInt(x / 256.0f), Mathf.FloorToInt(y / 256.0f))].GetBlock(x % 256, y % 256);
 			else return null;
+			//Debug.Log("get:" + new Vector2Int(Mathf.FloorToInt(x / 256.0f), Mathf.FloorToInt(y / 256.0f)) + new Vector2Int(x % 256, y % 256) + (b ? b : " null"));
 		}
 		public static Block GetBlock(Vector2Int v)
 		{
@@ -25,9 +26,10 @@ namespace Manager
 		}
 		public static void SetBlock(int x, int y, Block block)
 		{
-			if (!instend.blockList.ContainsKey(new Vector2Int(Mathf.FloorToInt(x / 256), Mathf.FloorToInt(y / 256))))
-				instend.blockList[new Vector2Int(Mathf.FloorToInt(x / 256), Mathf.FloorToInt(y / 256))] = new();
-			instend.blockList[new Vector2Int(Mathf.FloorToInt(x / 256), Mathf.FloorToInt(y / 256))].SetBlock(x % 256, y % 256, block);
+			//Debug.Log("set:" + new Vector2Int(Mathf.FloorToInt(x / 256.0f), Mathf.FloorToInt(y / 256.0f)) + new Vector2Int(x % 256, y % 256) + block);
+			if (!instend.blockList.ContainsKey(new Vector2Int(Mathf.FloorToInt(x / 256.0f), Mathf.FloorToInt(y / 256.0f))))
+				instend.blockList[new Vector2Int(Mathf.FloorToInt(x / 256.0f), Mathf.FloorToInt(y / 256.0f))] = new();
+			instend.blockList[new Vector2Int(Mathf.FloorToInt(x / 256.0f), Mathf.FloorToInt(y / 256.0f))].SetBlock(x % 256, y % 256, block);
 		}
 		public static void SetBlock(Vector2Int v, Block block)
 		{

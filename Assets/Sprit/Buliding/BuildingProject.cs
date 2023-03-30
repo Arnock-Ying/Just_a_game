@@ -35,6 +35,7 @@ public class BuildingProject : Block
 
         rb.bodyType = RigidbodyType2D.Kinematic;
 
+        size = projecting.size;
         spr.color = new Color(0.5f, 1, 0.5f, 0.5f);
         isholding = true;
         tag = "Building";
@@ -53,7 +54,7 @@ public class BuildingProject : Block
     {
         if (isholding)
         {
-            if (MapManager.GetBuild(Camera.main.ScreenToWorldPoint(Input.mousePosition), projecting.size))
+            if (MapManager.GetBuild(transform.position, projecting.size))
             {
                 spr.color = new Color(1, 0, 0, 0.5f);
                 collding = true;
@@ -112,7 +113,7 @@ public class BuildingProject : Block
             obj.SetActive(true);
             obj.GetComponent<BuildingProject>().StandProject();
             obj.isStatic = true;
-            MapManager.SetBuild(Camera.main.ScreenToWorldPoint(Input.mousePosition), projecting.size, projecting);
+            MapManager.SetBuild(transform.position, projecting.size, projecting);
         }
     }
 }

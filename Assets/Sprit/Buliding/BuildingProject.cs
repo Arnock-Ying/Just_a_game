@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 
 using GameBase;
+using Manager;
 
 ///<summary>
 ///½¨Öþ¹æ»®
@@ -50,45 +51,57 @@ public class BuildingProject : Block
 
     private void Update()
     {
-        
-    }
-
-    private void OnTriggerEnter2D(Collider2D other)
-    {
         if (isholding)
         {
-            if (other.tag == "Building" || other.tag == "Mineral")
+            if (MapManager.GetBuild(Camera.main.ScreenToWorldPoint(Input.mousePosition), projecting.size))
             {
                 spr.color = new Color(1, 0, 0, 0.5f);
                 collding = true;
             }
-        }
-    }
-
-    private void OnTriggerStay2D(Collider2D collision)
-    {
-        if (isholding)
-        {
-            if (collision.tag == "Building" || collision.tag == "Mineral")
-            {
-                spr.color = new Color(1, 0, 0, 0.5f);
-                collding = true;
-            }
-        }
-    }
-
-    private void OnTriggerExit2D(Collider2D other)
-    {
-        //Debug.Log(other.tag);
-        if (isholding)
-        {
-            if (other.tag == "Building" || other.tag == "Mineral")
+            else
             {
                 spr.color = new Color(0.5f, 1, 0.5f, 0.5f);
                 collding = false;
             }
         }
     }
+
+    //private void OnTriggerEnter2D(Collider2D other)
+    //{
+    //    if (isholding)
+    //    {
+    //        if (other.tag == "Building" || other.tag == "Mineral")
+    //        {
+    //            spr.color = new Color(1, 0, 0, 0.5f);
+    //            collding = true;
+    //        }
+    //    }
+    //}
+
+    //private void OnTriggerStay2D(Collider2D collision)
+    //{
+    //    if (isholding)
+    //    {
+    //        if (collision.tag == "Building" || collision.tag == "Mineral")
+    //        {
+    //            spr.color = new Color(1, 0, 0, 0.5f);
+    //            collding = true;
+    //        }
+    //    }
+    //}
+
+    //private void OnTriggerExit2D(Collider2D other)
+    //{
+    //    //Debug.Log(other.tag);
+    //    if (isholding)
+    //    {
+    //        if (other.tag == "Building" || other.tag == "Mineral")
+    //        {
+    //            spr.color = new Color(0.5f, 1, 0.5f, 0.5f);
+    //            collding = false;
+    //        }
+    //    }
+    //}
 
     private void OnMouseUpAsButton()
     {
@@ -99,7 +112,9 @@ public class BuildingProject : Block
             obj.SetActive(true);
             obj.GetComponent<BuildingProject>().StandProject();
             obj.isStatic = true;
+            MapManager.SetBuild(Camera.main.ScreenToWorldPoint(Input.mousePosition), projecting.size, projecting);
         }
     }
 }
+
 

@@ -78,6 +78,13 @@ namespace GameBase
     {
         public string id;
         public int count;
+
+        Item(string _id = "", int _count = 0)
+        {
+            id = _id;
+            count = _count;
+        }
+        Item() { id = ""; count = 0; }
     }
 
     /// <summary>

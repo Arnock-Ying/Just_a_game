@@ -11,13 +11,15 @@ public class Mineral : MonoBehaviour
 
     private void Start()
     {
-        InitItem(id, count);
+        //InitItem(id, count);
+        //Debug.Log(item.id);
+        //Debug.Log(item.count);
     }
 
-    private void InitItem(string id, int count)
-    {
-        item.id = id;
-        item.count=count;
-    }
+    //private void InitItem(string id, int count)
+    //{
+    //    item.id = id;
+    //    item.count=count;
+    //}
 
 }

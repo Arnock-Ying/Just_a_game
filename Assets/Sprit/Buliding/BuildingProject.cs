@@ -82,7 +82,7 @@ public class BuildingProject : Block
 
     private void OnTriggerExit2D(Collider2D other)
     {
-        Debug.Log(other.tag);
+        //Debug.Log(other.tag);
         if (isholding)
         {
             if (other.tag == "Building" || other.tag == "Mineral")

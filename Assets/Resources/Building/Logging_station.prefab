@@ -146,4 +146,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e1ea091ac2082c64597ba31024a8038f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  hp: 6
   size: {x: 1, y: 1}
+  maxInvent: 0
+  MiningRange:
+  - {x: 1, y: 0}
+  - {x: 1, y: 1}
+  - {x: 1, y: -1}
+  - {x: 0, y: -1}
+  - {x: 0, y: 1}
+  - {x: -1, y: 0}
+  - {x: -1, y: 1}
+  - {x: -1, y: -1}
+  Mines:
+  - log
+  minlist: []
+  dig_num: 1

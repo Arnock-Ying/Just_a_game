@@ -39,7 +39,7 @@ public class MiningMach : BaseBuild
 			Mining();
 			timer = 0;
 			Debug.Log(invent.GetLog());
-		}
+        }
 	}
 
 	protected virtual void FindMineral()

@@ -94,12 +94,12 @@ public class Construction : MonoBehaviour
 		if (!now_holding)
 		{
 			GameObject pro = new GameObject("project");
-			pro.AddComponent<BuildingProject>().SetProject(prefab);
+			pro.AddComponent<BuildingProject>().SetProject(selected_prefab);
 			now_holding = pro;
 		}
 		else
 		{
-			now_holding.GetComponent<BuildingProject>().SetProject(prefab);
+			now_holding.GetComponent<BuildingProject>().SetProject(selected_prefab);
 		}
 	}
 }

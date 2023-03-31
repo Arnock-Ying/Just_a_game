@@ -148,7 +148,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   hp: 6
   size: {x: 1, y: 1}
-  maxInvent: 20
+  maxInvent: 100
   MiningRange:
   - {x: 1, y: 0}
   - {x: 1, y: 1}

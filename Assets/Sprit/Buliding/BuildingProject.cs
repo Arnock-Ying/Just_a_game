@@ -11,6 +11,7 @@ using Manager;
 ///</summary>
 public class BuildingProject : Block
 {
+    //private GameObject prefab;
     private Block projecting;
     private BoxCollider2D coll;
     private Rigidbody2D rb;
@@ -19,8 +20,10 @@ public class BuildingProject : Block
     Vector3 mouse_pos = new Vector3(0, 0, -999);
     private bool isholding;
     private bool collding;
+
     public void SetProject(GameObject prefab)
     {
+        //this.prefab = prefab;
         coll = GetComponent<BoxCollider2D>();
         spr = GetComponent<SpriteRenderer>();
         rb = GetComponent<Rigidbody2D>();
@@ -42,8 +45,9 @@ public class BuildingProject : Block
         tag = "Building";
     }
 
-    private void StandProject()
+    private void StandProject(Block pro)
     {
+        projecting = pro;
         isholding = false;
         coll = GetComponent<BoxCollider2D>();
         spr = GetComponent<SpriteRenderer>();
@@ -51,8 +55,24 @@ public class BuildingProject : Block
         coll.isTrigger = false;
     }
 
+    bool fin = true;
     private void Update()
     {
+        //Debug.Log(prefab);
+        //建造完成
+        if (!isholding && fin && projecting.gameObject)
+        {
+            GameObject obj = Instantiate(projecting.gameObject);
+            obj.transform.parent = this.transform.parent;
+            obj.transform.position = new Vector3(this.transform.position.x, this.transform.position.y, 0);
+            obj.SetActive(true);
+            MapManager.SetBuild(transform.position, projecting.size, obj.GetComponent<Block>());
+            fin = false;
+            Destroy(this.gameObject);
+            //处理物流
+
+            //Debug.Log("建造完成");
+        }
         if (isholding)
         {
             if (MapManager.GetBuild(transform.position, projecting.size))
@@ -125,9 +145,9 @@ public class BuildingProject : Block
             var obj = Instantiate(gameObject);
             obj.transform.parent = transform.parent;
             obj.SetActive(true);
-            obj.GetComponent<BuildingProject>().StandProject();
+            obj.GetComponent<BuildingProject>().StandProject(projecting);
             obj.isStatic = true;
-            MapManager.SetBuild(transform.position, projecting.size, projecting);
+            MapManager.SetBuild(transform.position, projecting.size, this);
         }
     }
 }

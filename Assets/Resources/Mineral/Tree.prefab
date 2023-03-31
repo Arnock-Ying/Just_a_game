@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 2678064483287967857}
   - component: {fileID: 2678064483287967861}
   m_Layer: 0
-  m_Name: tree
+  m_Name: Tree
   m_TagString: Mineral
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -146,5 +146,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e2a7a539be7bede46896e7179888dab3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  id: tree
+  size: {x: 1, y: 1}
+  id: log
   count: 666

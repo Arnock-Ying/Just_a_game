@@ -146,3 +146,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5e90c80ed4456e949bfc6c5ecf74b313, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  hp: -1
+  size: {x: 1, y: 1}
+  pipeImage:
+  - {fileID: -1891793564, guid: af0f0b84a8b7766468d0e06ca15a4ed6, type: 3}
+  - {fileID: 1733600662, guid: af0f0b84a8b7766468d0e06ca15a4ed6, type: 3}
+  - {fileID: 863909956, guid: af0f0b84a8b7766468d0e06ca15a4ed6, type: 3}
+  - {fileID: -676616128, guid: af0f0b84a8b7766468d0e06ca15a4ed6, type: 3}
+  - {fileID: -2037441356, guid: af0f0b84a8b7766468d0e06ca15a4ed6, type: 3}
+  - {fileID: -1874566578, guid: af0f0b84a8b7766468d0e06ca15a4ed6, type: 3}

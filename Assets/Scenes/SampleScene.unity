@@ -1521,10 +1521,6 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 3661061880047143624, guid: b2e7f294347de2c46b696ffc905a3480, type: 3}
-      propertyPath: maxInvent
-      value: 100
-      objectReference: {fileID: 0}
     - target: {fileID: 3661061880047143627, guid: b2e7f294347de2c46b696ffc905a3480, type: 3}
       propertyPath: m_Name
       value: Logging_station

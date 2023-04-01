@@ -5,21 +5,24 @@ using UnityEngine;
 using GameBase;
 using Manager;
 
-public class LogistCentral : BaseBuild
+namespace Logist
 {
-	private LogistNet managedlogist;
-	private SpriteRenderer spriteRenderer;
-
-	void Start()
+	public class LogistCentral : BaseBuild
 	{
-		MapManager.SetBuild(transform.position, size, this);
-		var col = gameObject.GetComponent<BoxCollider>();
-		spriteRenderer = GetComponent<SpriteRenderer>();
+		private LogistNet managedlogist;
+		private SpriteRenderer spriteRenderer;
+
+		void Start()
+		{
+			MapManager.SetBuild(transform.position, size, this);
+			var col = gameObject.GetComponent<BoxCollider>();
+			spriteRenderer = GetComponent<SpriteRenderer>();
+		}
+
+		void Update()
+		{
+
+		}
+
 	}
-
-	void Update()
-	{
-
-	}
-
 }

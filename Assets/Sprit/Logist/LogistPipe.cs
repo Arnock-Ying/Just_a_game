@@ -21,7 +21,6 @@ namespace Logist
 
 		int con_num = 0;    //连接数量
 		Block[] findbuilding = new Block[4];//上下左右是否有建筑
-		int[] step = { -1, 1, 0, 0, 0, 0, 1, -1 };//上下左右
 
 		private void Start()
 		{
@@ -78,6 +77,7 @@ namespace Logist
 			//Debug.Log(pos);
 			for (int i = 0; i < 4; i++)
 			{
+				int[] step = { -1, 1, 0, 0, 0, 0, 1, -1 };
 				var block = MapManager.GetBlock(pos.x + step[i], pos.y + step[i + 4]);
 				//Debug.Log(block);
 				if (block != null && block.gameObject.tag == "Building")

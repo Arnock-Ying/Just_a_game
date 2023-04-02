@@ -13,7 +13,10 @@ namespace Logist
 	public class Router
 	{
 
-		private ushort[] vs = new ushort[255];
+		private ushort[] vs = new ushort[256];
+		public readonly LogistPipe pipe;
+
+		public ushort[] IpTable { get { return (ushort[])vs.Clone(); } }
 
 		private int Len(byte ip)
 		{
@@ -28,17 +31,32 @@ namespace Logist
 		{
 			vs[ip] = (ushort)((len << 2) | ((byte)dir & 3));
 		}
-		public Router()
+		public Router(LogistPipe pipe)
 		{
+			this.pipe = pipe;
 			for (int i = 0; i < 255; ++i) vs[i] = 0;
 		}
 
 		public bool ChangeRoute(int ip, Dircation dir, int len)
 		{
 			if (ip > 255 || ip < 0) return false;
-			if (len <= 0 || Len((byte)ip) <= len) return false;
+			if (len == 0)
+				Set((byte)ip, 0, 0);
+			else if (len < 0 || Len((byte)ip) <= len) return false;
 
-			Set((byte)ip, dir, len);
+			else Set((byte)ip, dir, len);
+			return true;
+		}
+
+		public bool ChangeRoute(ushort[] ipTable, Dircation dir)
+		{
+			for (int i = 0; i < 256; ++i)
+			{
+				if (ipTable[i] == 0 && (vs[i] ^ (int)dir) == 0)
+					vs[i] = 0;
+				if (((ipTable[i] + 4) | 3) < (vs[i] | 3))
+					vs[i] = (ushort)(ipTable[i] + 4);
+			}
 			return true;
 		}
 	}

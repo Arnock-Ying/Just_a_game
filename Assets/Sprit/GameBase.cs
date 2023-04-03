@@ -3,207 +3,242 @@ using System.Collections.Generic;
 using UnityEngine;
 
 using Logist;
+using Manager;
 
 namespace GameBase
 {
-    ///<summary>
-    ///方块类
-    ///</summary>
-    public class Block : MonoBehaviour
-    {
-        [SerializeField]
-        protected int hp = -1;
-        public Vector2Int size = new Vector2Int(1, 1);
+	///<summary>
+	///方块类
+	///</summary>
+	public class Block : MonoBehaviour
+	{
+		[SerializeField]
+		protected int hp = -1;
+		public Vector2Int size = new Vector2Int(1, 1);
 
-        public bool Dismantle()
-        {
-            return false;
-        }
-    }
+		public bool Dismantle()
+		{
+			return false;
+		}
 
-    /// <summary>
-    /// 建筑基类
-    /// </summary>
-    public class BaseBuild : Block
-    {
-        [SerializeField]
-        protected int maxInvent = 0;
-        protected int localip;
-        protected LogistNet fatherLogist = null;
-        protected EnergyNet fatherEngrgy;
-        protected Inventory invent = null;
-        public List<InterFace> InterFaces { get; } = new();
+		protected void UpdateLoglist()
+		{
+			Vector2Int pos = new(Mathf.FloorToInt(transform.position.x), Mathf.FloorToInt(this.transform.position.y));
+			for (int i = pos.x - Mathf.FloorToInt(size.x / 2.0f); i < pos.x + Mathf.CeilToInt(size.x / 2.0f); ++i)
+			{
+				if (MapManager.GetBlock(i, pos.y - Mathf.FloorToInt(size.y / 2.0f) - 1) is Logist.LogistPipe pipe1)
+				{
+					pipe1.BuildPipe(true);
+				}
+				if (MapManager.GetBlock(i, pos.y + Mathf.CeilToInt(size.y / 2.0f)) is Logist.LogistPipe pipe2)
+				{
+					pipe2.BuildPipe(true);
+				}
+			}
+			for (int i = pos.y - Mathf.FloorToInt(size.y / 2.0f); i < pos.y + Mathf.CeilToInt(size.y / 2.0f); ++i)
+			{
+				if (MapManager.GetBlock(pos.x - Mathf.FloorToInt(size.x / 2.0f) - 1, i) is Logist.LogistPipe pipe1)
+				{
+					pipe1.BuildPipe(true);
+				}
+				if (MapManager.GetBlock(pos.x + Mathf.CeilToInt(size.x / 2.0f), i) is Logist.LogistPipe pipe2)
+				{
+					pipe2.BuildPipe(true);
+				}
+			}
+		}
 
-        /// <summary>
-        /// 获取IP
-        /// </summary>
-        /// <returns></returns>
-        public string GetIP()
-        {
-            if (fatherLogist == null)
-                return localip.ToString();
-            else
-                return fatherLogist.manager.GetIP() + '.' + localip;
-        }
+		public virtual void DestroyBlock()
+		{
+			MapManager.SetBuild(transform.position, size, null);
+			UpdateLoglist();
+			Destroy(this.gameObject);
+		}
+	}
 
-    }
+	/// <summary>
+	/// 建筑基类
+	/// </summary>
+	public class BaseBuild : Block
+	{
+		[SerializeField]
+		protected int maxInvent = 0;
+		protected int localip;
+		protected LogistNet fatherLogist = null;
+		protected EnergyNet fatherEngrgy;
+		protected Inventory invent = null;
+		public List<InterFace> InterFaces { get; } = new();
 
-    public class Formula
-    {
-        List<Item> material = new();
-        public List<Item> Material { get { return material; } }
-        List<Item> product = new();
-        public List<Item> Product { get { return product; } }
-        public float production_time = 1;//生产需要的时间
-        public bool isenable = false;   //是否启用该配方
-        Formula() { }
-        Formula(List<Item> mat, List<Item> pro = null)
-        {
-            material = mat;
-            product = pro;
-        }
-    }
+		/// <summary>
+		/// 获取IP
+		/// </summary>
+		/// <returns></returns>
+		public string GetIP()
+		{
+			if (fatherLogist == null)
+				return localip.ToString();
+			else
+				return fatherLogist.manager.GetIP() + '.' + localip;
+		}
 
-    public class ProductionBuilding : BaseBuild
-    {
-        protected Formula formula;
-        protected float efficiency = 1;
-    }
+	}
 
-    ///<summary>
-    ///物流管道
-    /// </summary>
-    //public class LogistPipe : Block
-    //{
+	public class Formula
+	{
+		List<Item> material = new();
+		public List<Item> Material { get { return material; } }
+		List<Item> product = new();
+		public List<Item> Product { get { return product; } }
+		public float production_time = 1;//生产需要的时间
+		public bool isenable = false;   //是否启用该配方
+		Formula() { }
+		Formula(List<Item> mat, List<Item> pro = null)
+		{
+			material = mat;
+			product = pro;
+		}
+	}
 
-    //}
+	public class ProductionBuilding : BaseBuild
+	{
+		protected Formula formula;
+		protected float efficiency = 1;
+	}
 
-    ///<summary>
-    ///能量管道
-    ///</summary>
-    public class EnergyPipe : Block
-    {
+	///<summary>
+	///物流管道
+	/// </summary>
+	//public class LogistPipe : Block
+	//{
 
-    }
+	//}
 
-    ///<summary>
-    ///生物
-    ///</summary>
-    public class Biont : MonoBehaviour
-    {
-        protected int hp, atk;
-        protected float speed;
+	///<summary>
+	///能量管道
+	///</summary>
+	public class EnergyPipe : Block
+	{
 
-        public virtual bool onDeath()
-        {
-            return false;
-        }
-    }
+	}
 
-    /// <summary>
-    /// 物品类
-    /// </summary>
-    public class Item
-    {
-        public string id;
-        public int count;
-    }
+	///<summary>
+	///生物
+	///</summary>
+	public class Biont : MonoBehaviour
+	{
+		protected int hp, atk;
+		protected float speed;
 
-    /// <summary>
-    /// 物流网络
-    /// </summary>
-    public class LogistNet
-    {
-        public LogistCentral manager;
-    }
+		public virtual bool onDeath()
+		{
+			return false;
+		}
+	}
 
-    /// <summary>
-    /// 能量网络
-    /// </summary>
-    public class EnergyNet
-    {
-        public float power;
-        public float load;
+	/// <summary>
+	/// 物品类
+	/// </summary>
+	public class Item
+	{
+		public string id;
+		public int count;
+	}
 
-    }
+	/// <summary>
+	/// 物流网络
+	/// </summary>
+	public class LogistNet
+	{
+		public LogistCentral manager;
+	}
 
-    /// <summary>
-    /// 库存
-    /// </summary>
-    public class Inventory
-    {
-        private int maxCount = 0;
-        private int count = 0;
+	/// <summary>
+	/// 能量网络
+	/// </summary>
+	public class EnergyNet
+	{
+		public float power;
+		public float load;
 
-        private Dictionary<string, int> items;
+	}
 
-        public int Count { get { if (maxCount == 0) return 0; else return count; } }
-        public int MaxCount { get { return maxCount; } }
-        public Inventory()
-        {
-            maxCount = 0;
-        }
-        public Inventory(int size)
-        {
-            maxCount = size;
-            items = new();
-        }
-        public bool Input(string id, int number)
-        {
-            if (maxCount == 0) return false;
-            if (count + number > maxCount)
-                return false;
-            if (items.ContainsKey(id))
-            {
-                items[id] += number;
-                count += number;
-            }
-            else
-            {
-                items[id] = number;
-                count += number;
-            }
-            return true;
-        }
-        public bool Output(string id, int number)
-        {
-            if (maxCount == 0) return false;
-            if (items.ContainsKey(id))
-            {
-                if (items[id] > number)
-                {
-                    items[id] -= number;
-                    count -= number;
-                }
-                else if (items[id] == number)
-                {
-                    if (items.Remove(id))
-                        count -= number;
-                }
-                else
-                    return false;
-            }
-            else
-                return false;
-            return true;
-        }
+	/// <summary>
+	/// 库存
+	/// </summary>
+	public class Inventory
+	{
+		private int maxCount = 0;
+		private int count = 0;
 
-        public int Get(string id)
-        {
-            return items[id];
-        }
+		private Dictionary<string, int> items;
 
-        public string GetLog()
-        {
-            if (items == null) return "null";
-            string s = "{";
-            foreach (var i in items)
-            {
-                s += i.Key + " : " + i.Value + " , ";
-            }
-            s += "}";
-            return s;
-        }
-    }
+		public int Count { get { if (maxCount == 0) return 0; else return count; } }
+		public int MaxCount { get { return maxCount; } }
+		public Inventory()
+		{
+			maxCount = 0;
+		}
+		public Inventory(int size)
+		{
+			maxCount = size;
+			items = new();
+		}
+		public bool Input(string id, int number)
+		{
+			if (maxCount == 0) return false;
+			if (count + number > maxCount)
+				return false;
+			if (items.ContainsKey(id))
+			{
+				items[id] += number;
+				count += number;
+			}
+			else
+			{
+				items[id] = number;
+				count += number;
+			}
+			return true;
+		}
+		public bool Output(string id, int number)
+		{
+			if (maxCount == 0) return false;
+			if (items.ContainsKey(id))
+			{
+				if (items[id] > number)
+				{
+					items[id] -= number;
+					count -= number;
+				}
+				else if (items[id] == number)
+				{
+					if (items.Remove(id))
+						count -= number;
+				}
+				else
+					return false;
+			}
+			else
+				return false;
+			return true;
+		}
+
+		public int Get(string id)
+		{
+			return items[id];
+		}
+
+		public string GetLog()
+		{
+			if (items == null) return "null";
+			string s = "{";
+			foreach (var i in items)
+			{
+				s += i.Key + " : " + i.Value + " , ";
+			}
+			s += "}";
+			return s;
+		}
+	}
 
 }

@@ -9,10 +9,10 @@ namespace Logist
 		public BaseBuild block;
 		public LogistPipe pipe;
 
-		public void Remove()
+		public override void DestroyBlock()
 		{
 			block.InterFaces.Remove(this);
+			Destroy(this.gameObject);
 		}
-		  
 	}
 }

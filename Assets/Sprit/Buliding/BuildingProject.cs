@@ -11,139 +11,121 @@ using Manager;
 ///</summary>
 public class BuildingProject : BaseBuild
 {
-    //private GameObject prefab;
-    private Block projecting;
-    private BoxCollider2D coll;
-    private Rigidbody2D rb;
-    private SpriteRenderer spr;
+	//private GameObject prefab;
+	private Block projecting;
+	private BoxCollider2D coll;
+	private Rigidbody2D rb;
+	private SpriteRenderer spr;
 
-    Vector3 mouse_pos = new Vector3(0, 0, -999);
-    private bool isholding;
-    //private bool collding;
+	Vector3 mouse_pos = new Vector3(0, 0, -999);
+	private bool isholding;
+	//private bool collding;
 
-    public void SetProject(GameObject prefab)
-    {
-        coll = GetComponent<BoxCollider2D>();
-        spr = GetComponent<SpriteRenderer>();
-        rb = GetComponent<Rigidbody2D>();
-        if (!coll) coll = gameObject.AddComponent<BoxCollider2D>();
-        if (!spr) spr = gameObject.AddComponent<SpriteRenderer>();
-        if (!rb) rb = gameObject.AddComponent<Rigidbody2D>();
-        projecting = prefab.GetComponent<Block>();
-        if (!projecting) return;
-        coll.size = prefab.GetComponent<BoxCollider2D>().size;
-        coll.isTrigger = true;
-        spr.sprite = prefab.GetComponent<SpriteRenderer>().sprite;
-        transform.localScale = prefab.transform.localScale;
-
-        rb.bodyType = RigidbodyType2D.Kinematic;
-
-        size = projecting.size;
-        spr.color = new Color(0.5f, 1, 0.5f, 0.5f);
-        isholding = true;
-        tag = "Building";
-    }
-
-    private void StandProject(Block pro)
-    {
-        projecting = pro;
-        isholding = false;
-        coll = GetComponent<BoxCollider2D>();
-        spr = GetComponent<SpriteRenderer>();
-        spr.color = new Color(0.5f, 0.5f, 1, 0.5f);
-        coll.isTrigger = false;
-    }
-
-    private void UpdateLoglist()
+	public void SetProject(GameObject prefab)
 	{
-        Vector2Int pos = new(Mathf.FloorToInt(transform.position.x), Mathf.FloorToInt(this.transform.position.y));
-        for (int i = pos.x - Mathf.FloorToInt(size.x / 2.0f); i < pos.x + Mathf.CeilToInt(size.x / 2.0f); ++i)
-        {
-            if (MapManager.GetBlock(i, pos.y - Mathf.FloorToInt(size.y / 2.0f) - 1) is Logist.LogistPipe pipe1)
-            {
-                pipe1.FindBuilding(true);
-            }
-            if (MapManager.GetBlock(i, pos.y + Mathf.CeilToInt(size.y / 2.0f)) is Logist.LogistPipe pipe2)
-            {
-                pipe2.FindBuilding(true);
-            }
-        }
-        for (int i = pos.y - Mathf.FloorToInt(size.y / 2.0f); i < pos.y + Mathf.CeilToInt(size.y / 2.0f); ++i)
-        {
-            if (MapManager.GetBlock(pos.x - Mathf.FloorToInt(size.x / 2.0f) - 1, i) is Logist.LogistPipe pipe1)
-            {
-                pipe1.FindBuilding(true);
-            }
-            if (MapManager.GetBlock(pos.x + Mathf.CeilToInt(size.x / 2.0f), i) is Logist.LogistPipe pipe2)
-            {
-                pipe2.FindBuilding(true);
-            }
-        }
-    }
+		coll = GetComponent<BoxCollider2D>();
+		spr = GetComponent<SpriteRenderer>();
+		rb = GetComponent<Rigidbody2D>();
+		if (!coll) coll = gameObject.AddComponent<BoxCollider2D>();
+		if (!spr) spr = gameObject.AddComponent<SpriteRenderer>();
+		if (!rb) rb = gameObject.AddComponent<Rigidbody2D>();
+		projecting = prefab.GetComponent<Block>();
+		if (!projecting) return;
+		coll.size = prefab.GetComponent<BoxCollider2D>().size;
+		coll.isTrigger = true;
+		spr.sprite = prefab.GetComponent<SpriteRenderer>().sprite;
+		transform.localScale = prefab.transform.localScale;
 
-    private void FinishBuild()
+		rb.bodyType = RigidbodyType2D.Kinematic;
+
+		size = projecting.size;
+		spr.color = new Color(0.5f, 1, 0.5f, 0.5f);
+		isholding = true;
+		tag = "Building";
+	}
+
+	private void StandProject(Block pro)
 	{
-        GameObject obj = Instantiate(projecting.gameObject);
-        obj.transform.parent = this.transform.parent;
-        obj.transform.position = new Vector3(this.transform.position.x, this.transform.position.y, 0);
-        obj.SetActive(true);
-        MapManager.SetBuild(transform.position, projecting.size, obj.GetComponent<Block>());
-        fin = false;
+		projecting = pro;
+		isholding = false;
+		coll = GetComponent<BoxCollider2D>();
+		spr = GetComponent<SpriteRenderer>();
+		spr.color = new Color(0.5f, 0.5f, 1, 0.5f);
+		coll.isTrigger = false;
 
-        //处理物流
-        UpdateLoglist();
-        //Debug.Log("建造完成");
-        Destroy(this.gameObject);
-    }
+		UpdateLoglist();
+	}
 
-    bool fin = false;
-    private void Update()
-    {
-        //Debug.Log(prefab);
-        //建造完成
-        if (!isholding && fin && projecting.gameObject)
-        {
-            FinishBuild();
-        }
-        if (isholding)
-        {
-            if (MapManager.GetBuild(transform.position, projecting.size))
-            {
-                spr.color = new Color(1, 0, 0, 0.5f);
-                //collding = true;
-            }
-            else
-            {
-                spr.color = new Color(0.5f, 1, 0.5f, 0.5f);
-                //collding = false;
-                if (Input.GetMouseButton(0) && !EventSystem.current.IsPointerOverGameObject())
-                {
-                    var obj = Instantiate(gameObject);
-                    obj.transform.parent = transform.parent;
-                    obj.SetActive(true);
-                    obj.GetComponent<BuildingProject>().StandProject(projecting);
-                    obj.isStatic = true;
-                    MapManager.SetBuild(transform.position, projecting.size, this);
-                }
-            }
-        }
-        else if (!EventSystem.current.IsPointerOverGameObject())
-        {
-            if (Input.GetMouseButtonDown(1))
-            {
-                mouse_pos = Input.mousePosition;
-            }
-			if (Input.GetMouseButtonUp(1) && Input.mousePosition == mouse_pos)
+	private void FinishBuild()
+	{
+		GameObject obj = Instantiate(projecting.gameObject);
+		obj.transform.parent = this.transform.parent;
+		obj.transform.position = new Vector3(this.transform.position.x, this.transform.position.y, 0);
+		obj.SetActive(true);
+		MapManager.SetBuild(transform.position, projecting.size, obj.GetComponent<Block>());
+		fin = false;
+
+		//处理物流
+		UpdateLoglist();
+		//Debug.Log("建造完成");
+		Destroy(this.gameObject);
+	}
+
+	bool fin = false;
+	private void Update()
+	{
+		fin = projecting is Logist.LogistPipe;
+		//Debug.Log(prefab);
+		//建造完成
+		if (!isholding && fin && projecting.gameObject)
+		{
+			FinishBuild();
+		}
+		if (isholding)
+		{
+			if (MapManager.GetBuild(transform.position, projecting.size))
+			{
+				spr.color = new Color(1, 0, 0, 0.5f);
+				//collding = true;
+			}
+			else
+			{
+				spr.color = new Color(0.5f, 1, 0.5f, 0.5f);
+				//collding = false;
+				if (Input.GetMouseButton(0) && !EventSystem.current.IsPointerOverGameObject())
+				{
+					var obj = Instantiate(gameObject);
+					MapManager.SetBuild(transform.position, projecting.size, this);
+					obj.transform.parent = transform.parent;
+					obj.SetActive(true);
+					obj.GetComponent<BuildingProject>().StandProject(projecting);
+					obj.isStatic = true;
+				}
+			}
+			if (projecting is Logist.LogistPipe)
+			{
+				var pair = Logist.LogistPipe.GetImageAndAngles(transform.position);
+				spr.sprite = pair.Key;
+				transform.eulerAngles = new Vector3(0, 0, pair.Value);
+			}
+		}
+		else if (!EventSystem.current.IsPointerOverGameObject())
+		{
+			if (Input.GetMouseButtonDown(1))
+			{
+				mouse_pos = Input.mousePosition;
+			}
+			if (Input.GetMouseButtonUp(1) && (Input.mousePosition - mouse_pos).sqrMagnitude < 0.1f)
 			{
 				var pos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
 				if (pos.x > transform.position.x - (float)size.x / 2
 					&& pos.x < transform.position.x + (float)size.x / 2
 					&& pos.y > transform.position.y - (float)size.y / 2
 					&& pos.y < transform.position.y + (float)size.y / 2)
-					Destroy(this.gameObject);
+					DestroyBlock();
 			}
 		}
-    }
+	}
 
 	//private void OnTriggerEnter2D(Collider2D other)
 	//{

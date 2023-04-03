@@ -19,11 +19,10 @@ public class BuildingProject : Block
 
     Vector3 mouse_pos = new Vector3(0, 0, -999);
     private bool isholding;
-    private bool collding;
+    //private bool collding;
 
     public void SetProject(GameObject prefab)
     {
-        //this.prefab = prefab;
         coll = GetComponent<BoxCollider2D>();
         spr = GetComponent<SpriteRenderer>();
         rb = GetComponent<Rigidbody2D>();
@@ -78,12 +77,21 @@ public class BuildingProject : Block
             if (MapManager.GetBuild(transform.position, projecting.size))
             {
                 spr.color = new Color(1, 0, 0, 0.5f);
-                collding = true;
+                //collding = true;
             }
             else
             {
                 spr.color = new Color(0.5f, 1, 0.5f, 0.5f);
-                collding = false;
+                //collding = false;
+                if (Input.GetMouseButton(0) && !EventSystem.current.IsPointerOverGameObject())
+                {
+                    var obj = Instantiate(gameObject);
+                    obj.transform.parent = transform.parent;
+                    obj.SetActive(true);
+                    obj.GetComponent<BuildingProject>().StandProject(projecting);
+                    obj.isStatic = true;
+                    MapManager.SetBuild(transform.position, projecting.size, this);
+                }
             }
         }
         else if (!EventSystem.current.IsPointerOverGameObject())
@@ -91,12 +99,15 @@ public class BuildingProject : Block
             if (Input.GetMouseButtonDown(1))
             {
                 mouse_pos = Input.mousePosition;
-                //Debug.Log(mouse_pos);
             }
             if (Input.GetMouseButtonUp(1) && Input.mousePosition == mouse_pos)
             {
-                //Debug.Log(mouse_pos);
-                //Destroy(this);
+                var pos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+                if (pos.x > transform.position.x - (float)size.x / 2
+                    && pos.x < transform.position.x + (float)size.x / 2
+                    && pos.y > transform.position.y - (float)size.y / 2
+                    && pos.y < transform.position.y + (float)size.y / 2)
+                    Destroy(this.gameObject);
             }
         }
     }
@@ -138,18 +149,18 @@ public class BuildingProject : Block
     //    }
     //}
 
-    private void OnMouseUpAsButton()
-    {
-        if (!collding && isholding && !EventSystem.current.IsPointerOverGameObject())
-        {
-            var obj = Instantiate(gameObject);
-            obj.transform.parent = transform.parent;
-            obj.SetActive(true);
-            obj.GetComponent<BuildingProject>().StandProject(projecting);
-            obj.isStatic = true;
-            MapManager.SetBuild(transform.position, projecting.size, this);
-        }
-    }
+    //private void OnMouseUpAsButton()
+    //{
+    //    if (!collding && isholding && !EventSystem.current.IsPointerOverGameObject())
+    //    {
+    //        var obj = Instantiate(gameObject);
+    //        obj.transform.parent = transform.parent;
+    //        obj.SetActive(true);
+    //        obj.GetComponent<BuildingProject>().StandProject(projecting);
+    //        obj.isStatic = true;
+    //        MapManager.SetBuild(transform.position, projecting.size, this);
+    //    }
+    //}
 }
 
 

@@ -501,6 +501,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b86b401336a9eb94c9ca2b61274eab41, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  pipeImage:
+  - {fileID: -1891793564, guid: af0f0b84a8b7766468d0e06ca15a4ed6, type: 3}
+  - {fileID: 1733600662, guid: af0f0b84a8b7766468d0e06ca15a4ed6, type: 3}
+  - {fileID: 863909956, guid: af0f0b84a8b7766468d0e06ca15a4ed6, type: 3}
+  - {fileID: -676616128, guid: af0f0b84a8b7766468d0e06ca15a4ed6, type: 3}
+  - {fileID: -2037441356, guid: af0f0b84a8b7766468d0e06ca15a4ed6, type: 3}
+  - {fileID: -1874566578, guid: af0f0b84a8b7766468d0e06ca15a4ed6, type: 3}
 --- !u!81 &458766343
 AudioListener:
   m_ObjectHideFlags: 0

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 using Logist;
+using Manager;
 
 namespace GameBase
 {
@@ -19,6 +20,40 @@ namespace GameBase
 		{
 			return false;
 		}
+
+		protected void UpdateLoglist()
+		{
+			Vector2Int pos = new(Mathf.FloorToInt(transform.position.x), Mathf.FloorToInt(this.transform.position.y));
+			for (int i = pos.x - Mathf.FloorToInt(size.x / 2.0f); i < pos.x + Mathf.CeilToInt(size.x / 2.0f); ++i)
+			{
+				if (MapManager.GetBlock(i, pos.y - Mathf.FloorToInt(size.y / 2.0f) - 1) is Logist.LogistPipe pipe1)
+				{
+					pipe1.BuildPipe(true);
+				}
+				if (MapManager.GetBlock(i, pos.y + Mathf.CeilToInt(size.y / 2.0f)) is Logist.LogistPipe pipe2)
+				{
+					pipe2.BuildPipe(true);
+				}
+			}
+			for (int i = pos.y - Mathf.FloorToInt(size.y / 2.0f); i < pos.y + Mathf.CeilToInt(size.y / 2.0f); ++i)
+			{
+				if (MapManager.GetBlock(pos.x - Mathf.FloorToInt(size.x / 2.0f) - 1, i) is Logist.LogistPipe pipe1)
+				{
+					pipe1.BuildPipe(true);
+				}
+				if (MapManager.GetBlock(pos.x + Mathf.CeilToInt(size.x / 2.0f), i) is Logist.LogistPipe pipe2)
+				{
+					pipe2.BuildPipe(true);
+				}
+			}
+		}
+
+		public virtual void DestroyBlock()
+		{
+			MapManager.SetBuild(transform.position, size, null);
+			UpdateLoglist();
+			Destroy(this.gameObject);
+		}
 	}
 
 	/// <summary>
@@ -32,6 +67,7 @@ namespace GameBase
 		protected LogistNet fatherLogist = null;
 		protected EnergyNet fatherEngrgy;
 		protected Inventory invent = null;
+		public List<InterFace> InterFaces { get; } = new();
 
 		/// <summary>
 		/// 获取IP
@@ -44,6 +80,29 @@ namespace GameBase
 			else
 				return fatherLogist.manager.GetIP() + '.' + localip;
 		}
+
+	}
+
+	public class Formula
+	{
+		List<Item> material = new();
+		public List<Item> Material { get { return material; } }
+		List<Item> product = new();
+		public List<Item> Product { get { return product; } }
+		public float production_time = 1;//生产需要的时间
+		public bool isenable = false;   //是否启用该配方
+		Formula() { }
+		Formula(List<Item> mat, List<Item> pro = null)
+		{
+			material = mat;
+			product = pro;
+		}
+	}
+
+	public class ProductionBuilding : BaseBuild
+	{
+		protected Formula formula;
+		protected float efficiency = 1;
 	}
 
 	///<summary>

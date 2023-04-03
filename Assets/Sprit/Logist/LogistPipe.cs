@@ -9,7 +9,9 @@ namespace Logist
 {
 	public class LogistPipe : Block
 	{
+		[SerializeField]
 		SpriteRenderer spr;
+		LogistNet net;
 
 		//debug
 		[SerializeField]
@@ -24,9 +26,7 @@ namespace Logist
 
 		private void Start()
 		{
-			spr = GetComponent<SpriteRenderer>();
-			FindBuilding(false);
-			ChooseMap();
+			BuildPipe(false);
 		}
 
 		private void FixedUpdate()
@@ -55,39 +55,66 @@ namespace Logist
 				for (int i = 0; i < 4; ++i)
 					if ((int)dir != i && findbuilding[i] != null)
 					{
-						if (findbuilding[i] is LogistPipe) ((LogistPipe)findbuilding[i]).setRelayRoute(rout, (Dircation)i);
+						if (findbuilding[i] is LogistPipe pipe) pipe.setRelayRoute(rout, (Dircation)i);
 					}
 			}
 			else
 			{
-				router.ChangeRoute(rout, dir);
+				bool back = router.ChangeRoute(rout, dir);
 				for (int i = 0; i < 4; ++i)
-					if ((int)dir != i && findbuilding[i] != null)
+					if ((((int)dir != i) ^ back) && findbuilding[i] != null)
 					{
-						if (findbuilding[i] is LogistPipe) ((LogistPipe)findbuilding[i]).setRelayRoute(router.IpTable, (Dircation)i);
+						if (findbuilding[i] is LogistPipe pipe) pipe.setRelayRoute(router.IpTable, (Dircation)i);
 					}
 				GC.Collect();//手动让垃圾回收器释放一下
 			}
-
 		}
 
-		private void FindBuilding(bool isstand)
+		public void BuildPipe(bool isstand)
 		{
-			Vector2Int pos = new Vector2Int(Mathf.FloorToInt(transform.position.x), Mathf.FloorToInt(transform.position.y));
+			Vector2Int pos = new(Mathf.FloorToInt(transform.position.x), Mathf.FloorToInt(transform.position.y));
 			//Debug.Log(pos);
+			con_num = 0;
 			for (int i = 0; i < 4; i++)
 			{
 				int[] step = { -1, 1, 0, 0, 0, 0, 1, -1 };
 				var block = MapManager.GetBlock(pos.x + step[i], pos.y + step[i + 4]);
 				//Debug.Log(block);
-				if (block != null && block.gameObject.tag == "Building")
+
+				if (block != null)
 				{
-					findbuilding[i] = block;
-					con_num++;
-					if (!isstand && block is LogistPipe) ((LogistPipe)block).UpdateMap();
+					if (block is BaseBuild build)
+					{
+						con_num++;
+						if (findbuilding[i] is not InterFace nowinter || nowinter.block != build)
+						{
+							InterFace inter = Instantiate(Resources.Load<GameObject>("Pipe/InterFace")).GetComponent<InterFace>();
+							inter.gameObject.transform.position = new Vector3(transform.position.x + step[i] * 0.5f, transform.position.y + step[i + 4] * 0.5f, -1.5f);
+							build.InterFaces.Add(inter);
+							inter.block = build;
+							inter.pipe = this;
+							findbuilding[i] = inter;
+						}
+					}
+					if (block is LogistPipe pipe)
+					{
+						if (findbuilding[i] is InterFace inter)
+							inter.DestroyBlock();
 
+						con_num++;
+						findbuilding[i] = pipe;
+						if (!isstand)
+							pipe.BuildPipe(true);
+					}
 				}
-
+				else
+				{
+					if (findbuilding[i] is InterFace inter)
+					{
+						inter.DestroyBlock();
+					}
+					findbuilding[i] = null;
+				}
 			}
 			//foreach (var i in findbuilding)
 			//	Debug.Log(i);
@@ -104,45 +131,89 @@ namespace Logist
 				router = null;
 				GC.Collect();//手动让垃圾回收器释放一下
 			}
-
+			ChooseImage();
+			Dictionary<int, int> x = new();
+			foreach (var i in x) ;
 		}
 
-		private void ChooseMap()
+		public static KeyValuePair<Sprite, float> GetImageAndAngles(Vector3 position)
 		{
-			//加载con_num对应贴图
-			if (con_num == 2 && !(findbuilding[0] ^ findbuilding[1]))
-				spr.sprite = LogistManager.Instend.PipeImage[5];
-			else
-				spr.sprite = LogistManager.Instend.PipeImage[con_num];
-			//旋转
-			//Debug.Log(con_num);
-			if (con_num == 0 || con_num == 4) return;
-			if (con_num == 2 && !(findbuilding[0] ^ findbuilding[1]))
+			Vector2Int pos = new(Mathf.FloorToInt(position.x), Mathf.FloorToInt(position.y));
+			//Debug.Log(pos);
+			int con_num = 0;
+			bool[] findbuilding = new bool[4];
+			for (int i = 0; i < 4; i++)
 			{
-				if (findbuilding[2]) transform.eulerAngles = new Vector3(0, 0, 90);
+				findbuilding[i] = false;
+				int[] step = { -1, 1, 0, 0, 0, 0, 1, -1 };
+				var block = MapManager.GetBlock(pos.x + step[i], pos.y + step[i + 4]);
+				if (block is BaseBuild || block is LogistPipe)
+				{
+					++con_num;
+					findbuilding[i] = block;
+				}
 			}
+			Sprite sprite;
+			if (con_num == 2 && !(findbuilding[0] ^ findbuilding[1]))
+				sprite = LogistManager.Instend.PipeImage[5];
+			else
+				sprite = LogistManager.Instend.PipeImage[con_num];
+
+			float ans = 0;
+			if (con_num == 0 || con_num == 4) ans = 0;
+			else if (con_num == 2 && !(findbuilding[0] ^ findbuilding[1]))
+				if (findbuilding[2]) ans = 90;
+				else ans = 0;
 			else
 			{
 				int[] und = { 2, 0, 3, 1 };
 				int cnt = 0;
-				for (int i = 0; (findbuilding[und[i]]) || !(findbuilding[und[(i + 1) % 4]]); ++i)
-				{
-					//Debug.Log(cnt + "--(" + und[i] + "," + und[(i + 1) % 4] + ")" + (findbuilding[und[i]] != null) + ":" + (findbuilding[und[(i + 1) % 4]] != null));
-					++cnt;
-				}
-
-				if (con_num == 1) transform.eulerAngles = new Vector3(0, 0, 90 * (cnt));
-				else if (con_num == 2) transform.eulerAngles = new Vector3(0, 0, 90 * (cnt + 1));
-				else if (con_num == 3) transform.eulerAngles = new Vector3(0, 0, 90 * (cnt + 2));
+				for (int i = 0; (findbuilding[und[i]]) || !(findbuilding[und[(i + 1) % 4]]); ++i) ++cnt;
+				if (con_num == 1) ans = 90 * (cnt);
+				else if (con_num == 2) ans = 90 * (cnt + 1);
+				else if (con_num == 3) ans = 90 * (cnt + 2);
 			}
+			return new KeyValuePair<Sprite, float>(sprite, ans);
+		}
+
+		private void ChooseImage()
+		{
+			var pair = GetImageAndAngles(this.transform.position);
+			spr.sprite = pair.Key;
+			transform.eulerAngles = new Vector3(0, 0, pair.Value);
+			////加载con_num对应贴图
+			//if (con_num == 2 && !(findbuilding[0] ^ findbuilding[1]))
+			//	spr.sprite = LogistManager.Instend.PipeImage[5];
+			//else
+			//	spr.sprite = LogistManager.Instend.PipeImage[con_num];
+			////旋转
+			//Debug.Log(con_num);
+			//if (con_num == 0 || con_num == 4) return;
+			//if (con_num == 2 && !(findbuilding[0] ^ findbuilding[1]))
+			//{
+			//	if (findbuilding[2]) transform.eulerAngles = new Vector3(0, 0, 90);
+			//}
+			//else
+			//{
+			//	int[] und = { 2, 0, 3, 1 };
+			//	int cnt = 0;
+			//	for (int i = 0; (findbuilding[und[i]]) || !(findbuilding[und[(i + 1) % 4]]); ++i)
+			//	{
+			//		//Debug.Log(cnt + "--(" + und[i] + "," + und[(i + 1) % 4] + ")" + (findbuilding[und[i]] != null) + ":" + (findbuilding[und[(i + 1) % 4]] != null));
+			//		++cnt;
+			//	}
+
+			//	if (con_num == 1) transform.eulerAngles = new Vector3(0, 0, 90 * (cnt));
+			//	else if (con_num == 2) transform.eulerAngles = new Vector3(0, 0, 90 * (cnt + 1));
+			//	else if (con_num == 3) transform.eulerAngles = new Vector3(0, 0, 90 * (cnt + 2));
+			//}
 		}
 
 		private void UpdateMap()
 		{
 			con_num = 0;
 			for (int i = 0; i < 4; i++) findbuilding[i] = null;
-			FindBuilding(true);
-			ChooseMap();
+			BuildPipe(true);
 		}
 	}
 }

@@ -10,6 +10,7 @@ namespace Logist
 	public class LogistPipe : Block
 	{
 		SpriteRenderer spr;
+		LogistNet net;
 
 		//debug
 		[SerializeField]
@@ -55,7 +56,7 @@ namespace Logist
 				for (int i = 0; i < 4; ++i)
 					if ((int)dir != i && findbuilding[i] != null)
 					{
-						if (findbuilding[i] is LogistPipe) ((LogistPipe)findbuilding[i]).setRelayRoute(rout, (Dircation)i);
+						if (findbuilding[i] is LogistPipe pipe) pipe.setRelayRoute(rout, (Dircation)i);
 					}
 			}
 			else
@@ -64,7 +65,7 @@ namespace Logist
 				for (int i = 0; i < 4; ++i)
 					if ((int)dir != i && findbuilding[i] != null)
 					{
-						if (findbuilding[i] is LogistPipe) ((LogistPipe)findbuilding[i]).setRelayRoute(router.IpTable, (Dircation)i);
+						if (findbuilding[i] is LogistPipe pipe) pipe.setRelayRoute(router.IpTable, (Dircation)i);
 					}
 				GC.Collect();//手动让垃圾回收器释放一下
 			}
@@ -73,19 +74,25 @@ namespace Logist
 
 		private void FindBuilding(bool isstand)
 		{
-			Vector2Int pos = new Vector2Int(Mathf.FloorToInt(transform.position.x), Mathf.FloorToInt(transform.position.y));
+			Vector2Int pos = new(Mathf.FloorToInt(transform.position.x), Mathf.FloorToInt(transform.position.y));
 			//Debug.Log(pos);
 			for (int i = 0; i < 4; i++)
 			{
 				int[] step = { -1, 1, 0, 0, 0, 0, 1, -1 };
 				var block = MapManager.GetBlock(pos.x + step[i], pos.y + step[i + 4]);
 				//Debug.Log(block);
-				if (block != null && block.gameObject.tag == "Building")
+				if (block != null && block.gameObject.CompareTag("Building"))
 				{
 					findbuilding[i] = block;
 					con_num++;
-					if (!isstand && block is LogistPipe) ((LogistPipe)block).UpdateMap();
-
+					if (!isstand && block is LogistPipe pipe) pipe.UpdateMap();
+					if (!isstand && block is BaseBuild build)
+					{
+						InterFace inter = Instantiate(Resources.Load<GameObject>("Pipe/InterFace")).GetComponent<InterFace>();
+						inter.gameObject.transform.position = new Vector3(transform.position.x + step[i] * 0.5f, transform.position.y + step[i + 4] * 0.5f, -1.5f);
+						build.InterFaces.Add(inter);
+						findbuilding[i] = inter;
+					}
 				}
 
 			}

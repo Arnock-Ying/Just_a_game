@@ -39,6 +39,7 @@ namespace Logist
 
 		public bool ChangeRoute(int ip, Dircation dir, int len)
 		{
+			dir = (Dircation)((int)dir ^ 1);
 			if (ip > 255 || ip < 0) return false;
 			if (len == 0)
 				Set((byte)ip, 0, 0);
@@ -48,11 +49,12 @@ namespace Logist
 			return true;
 		}
 
-		public bool ChangeRoute(ushort[] ipTable, Dircation dir)
+		public bool ChangeRoute(ushort[] ipTable, Dircation _dir)
 		{
+			int dir = (int)_dir ^ 1;
 			for (int i = 0; i < 256; ++i)
 			{
-				if (ipTable[i] == 0 && (vs[i] ^ (int)dir) == 0)
+				if (ipTable[i] == 0 && (vs[i] ^ dir) == 0)
 					vs[i] = 0;
 				if (((ipTable[i] + 4) | 3) < (vs[i] | 3))
 					vs[i] = (ushort)(ipTable[i] + 4);

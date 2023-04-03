@@ -32,6 +32,7 @@ namespace GameBase
 		protected LogistNet fatherLogist = null;
 		protected EnergyNet fatherEngrgy;
 		protected Inventory invent = null;
+		public List<InterFace> InterFaces { get; } = new();
 
 		/// <summary>
 		/// ªÒ»°IP
@@ -44,6 +45,7 @@ namespace GameBase
 			else
 				return fatherLogist.manager.GetIP() + '.' + localip;
 		}
+
 	}
 
 	///<summary>

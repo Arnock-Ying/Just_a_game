@@ -9,7 +9,7 @@ using Manager;
 ///<summary>
 ///建筑规划
 ///</summary>
-public class BuildingProject : Block
+public class BuildingProject : BaseBuild
 {
     //private GameObject prefab;
     private Block projecting;
@@ -54,23 +54,56 @@ public class BuildingProject : Block
         coll.isTrigger = false;
     }
 
-    bool fin = true;
+    private void UpdateLoglist()
+	{
+        Vector2Int pos = new(Mathf.FloorToInt(transform.position.x), Mathf.FloorToInt(this.transform.position.y));
+        for (int i = pos.x - Mathf.FloorToInt(size.x / 2.0f); i < pos.x + Mathf.CeilToInt(size.x / 2.0f); ++i)
+        {
+            if (MapManager.GetBlock(i, pos.y - Mathf.FloorToInt(size.y / 2.0f) - 1) is Logist.LogistPipe pipe1)
+            {
+                pipe1.FindBuilding(true);
+            }
+            if (MapManager.GetBlock(i, pos.y + Mathf.CeilToInt(size.y / 2.0f)) is Logist.LogistPipe pipe2)
+            {
+                pipe2.FindBuilding(true);
+            }
+        }
+        for (int i = pos.y - Mathf.FloorToInt(size.y / 2.0f); i < pos.y + Mathf.CeilToInt(size.y / 2.0f); ++i)
+        {
+            if (MapManager.GetBlock(pos.x - Mathf.FloorToInt(size.x / 2.0f) - 1, i) is Logist.LogistPipe pipe1)
+            {
+                pipe1.FindBuilding(true);
+            }
+            if (MapManager.GetBlock(pos.x + Mathf.CeilToInt(size.x / 2.0f), i) is Logist.LogistPipe pipe2)
+            {
+                pipe2.FindBuilding(true);
+            }
+        }
+    }
+
+    private void FinishBuild()
+	{
+        GameObject obj = Instantiate(projecting.gameObject);
+        obj.transform.parent = this.transform.parent;
+        obj.transform.position = new Vector3(this.transform.position.x, this.transform.position.y, 0);
+        obj.SetActive(true);
+        MapManager.SetBuild(transform.position, projecting.size, obj.GetComponent<Block>());
+        fin = false;
+
+        //处理物流
+        UpdateLoglist();
+        //Debug.Log("建造完成");
+        Destroy(this.gameObject);
+    }
+
+    bool fin = false;
     private void Update()
     {
         //Debug.Log(prefab);
         //建造完成
         if (!isholding && fin && projecting.gameObject)
         {
-            GameObject obj = Instantiate(projecting.gameObject);
-            obj.transform.parent = this.transform.parent;
-            obj.transform.position = new Vector3(this.transform.position.x, this.transform.position.y, 0);
-            obj.SetActive(true);
-            MapManager.SetBuild(transform.position, projecting.size, obj.GetComponent<Block>());
-            fin = false;
-            Destroy(this.gameObject);
-            //处理物流
-
-            //Debug.Log("建造完成");
+            FinishBuild();
         }
         if (isholding)
         {
@@ -100,67 +133,67 @@ public class BuildingProject : Block
             {
                 mouse_pos = Input.mousePosition;
             }
-            if (Input.GetMouseButtonUp(1) && Input.mousePosition == mouse_pos)
-            {
-                var pos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-                if (pos.x > transform.position.x - (float)size.x / 2
-                    && pos.x < transform.position.x + (float)size.x / 2
-                    && pos.y > transform.position.y - (float)size.y / 2
-                    && pos.y < transform.position.y + (float)size.y / 2)
-                    Destroy(this.gameObject);
-            }
-        }
+			if (Input.GetMouseButtonUp(1) && Input.mousePosition == mouse_pos)
+			{
+				var pos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+				if (pos.x > transform.position.x - (float)size.x / 2
+					&& pos.x < transform.position.x + (float)size.x / 2
+					&& pos.y > transform.position.y - (float)size.y / 2
+					&& pos.y < transform.position.y + (float)size.y / 2)
+					Destroy(this.gameObject);
+			}
+		}
     }
 
-    //private void OnTriggerEnter2D(Collider2D other)
-    //{
-    //    if (isholding)
-    //    {
-    //        if (other.tag == "Building" || other.tag == "Mineral")
-    //        {
-    //            spr.color = new Color(1, 0, 0, 0.5f);
-    //            collding = true;
-    //        }
-    //    }
-    //}
+	//private void OnTriggerEnter2D(Collider2D other)
+	//{
+	//    if (isholding)
+	//    {
+	//        if (other.tag == "Building" || other.tag == "Mineral")
+	//        {
+	//            spr.color = new Color(1, 0, 0, 0.5f);
+	//            collding = true;
+	//        }
+	//    }
+	//}
 
-    //private void OnTriggerStay2D(Collider2D collision)
-    //{
-    //    if (isholding)
-    //    {
-    //        if (collision.tag == "Building" || collision.tag == "Mineral")
-    //        {
-    //            spr.color = new Color(1, 0, 0, 0.5f);
-    //            collding = true;
-    //        }
-    //    }
-    //}
+	//private void OnTriggerStay2D(Collider2D collision)
+	//{
+	//    if (isholding)
+	//    {
+	//        if (collision.tag == "Building" || collision.tag == "Mineral")
+	//        {
+	//            spr.color = new Color(1, 0, 0, 0.5f);
+	//            collding = true;
+	//        }
+	//    }
+	//}
 
-    //private void OnTriggerExit2D(Collider2D other)
-    //{
-    //    //Debug.Log(other.tag);
-    //    if (isholding)
-    //    {
-    //        if (other.tag == "Building" || other.tag == "Mineral")
-    //        {
-    //            spr.color = new Color(0.5f, 1, 0.5f, 0.5f);
-    //            collding = false;
-    //        }
-    //    }
-    //}
+	//private void OnTriggerExit2D(Collider2D other)
+	//{
+	//    //Debug.Log(other.tag);
+	//    if (isholding)
+	//    {
+	//        if (other.tag == "Building" || other.tag == "Mineral")
+	//        {
+	//            spr.color = new Color(0.5f, 1, 0.5f, 0.5f);
+	//            collding = false;
+	//        }
+	//    }
+	//}
 
-    //private void OnMouseUpAsButton()
-    //{
-    //    if (!collding && isholding && !EventSystem.current.IsPointerOverGameObject())
-    //    {
-    //        var obj = Instantiate(gameObject);
-    //        obj.transform.parent = transform.parent;
-    //        obj.SetActive(true);
-    //        obj.GetComponent<BuildingProject>().StandProject(projecting);
-    //        obj.isStatic = true;
-    //        MapManager.SetBuild(transform.position, projecting.size, this);
-    //    }
-    //}
+	//private void OnMouseUpAsButton()
+	//{
+	//    if (!collding && isholding && !EventSystem.current.IsPointerOverGameObject())
+	//    {
+	//        var obj = Instantiate(gameObject);
+	//        obj.transform.parent = transform.parent;
+	//        obj.SetActive(true);
+	//        obj.GetComponent<BuildingProject>().StandProject(projecting);
+	//        obj.isStatic = true;
+	//        MapManager.SetBuild(transform.position, projecting.size, this);
+	//    }
+	//}
 }
 
 

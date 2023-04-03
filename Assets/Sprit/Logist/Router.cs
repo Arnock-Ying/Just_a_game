@@ -51,15 +51,24 @@ namespace Logist
 
 		public bool ChangeRoute(ushort[] ipTable, Dircation _dir)
 		{
+
+			bool change = false;
 			int dir = (int)_dir ^ 1;
 			for (int i = 0; i < 256; ++i)
 			{
-				if (ipTable[i] == 0 && (vs[i] ^ dir) == 0)
-					vs[i] = 0;
+				if (ipTable[i] == 0 )
+				{
+					if ((vs[i] ^ dir) == 0)
+						vs[i] = 0;
+					else
+						change = true;
+				}
 				if (((ipTable[i] + 4) | 3) < (vs[i] | 3))
+				{
 					vs[i] = (ushort)(ipTable[i] + 4);
+				}
 			}
-			return true;
+			return change;
 		}
 	}
 }

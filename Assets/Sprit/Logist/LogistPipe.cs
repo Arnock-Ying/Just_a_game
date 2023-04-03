@@ -27,7 +27,6 @@ namespace Logist
 		{
 			spr = GetComponent<SpriteRenderer>();
 			FindBuilding(false);
-			ChooseMap();
 		}
 
 		private void FixedUpdate()
@@ -61,37 +60,55 @@ namespace Logist
 			}
 			else
 			{
-				router.ChangeRoute(rout, dir);
+				bool back = router.ChangeRoute(rout, dir);
 				for (int i = 0; i < 4; ++i)
-					if ((int)dir != i && findbuilding[i] != null)
+					if ((((int)dir != i) ^ back) && findbuilding[i] != null)
 					{
 						if (findbuilding[i] is LogistPipe pipe) pipe.setRelayRoute(router.IpTable, (Dircation)i);
 					}
 				GC.Collect();//手动让垃圾回收器释放一下
 			}
-
 		}
 
-		private void FindBuilding(bool isstand)
+		public void FindBuilding(bool isstand)
 		{
 			Vector2Int pos = new(Mathf.FloorToInt(transform.position.x), Mathf.FloorToInt(transform.position.y));
 			//Debug.Log(pos);
+			con_num = 0;
 			for (int i = 0; i < 4; i++)
 			{
 				int[] step = { -1, 1, 0, 0, 0, 0, 1, -1 };
 				var block = MapManager.GetBlock(pos.x + step[i], pos.y + step[i + 4]);
 				//Debug.Log(block);
+				
 				if (block != null && block.gameObject.CompareTag("Building"))
 				{
-					findbuilding[i] = block;
 					con_num++;
-					if (!isstand && block is LogistPipe pipe) pipe.UpdateMap();
-					if (!isstand && block is BaseBuild build)
+					if (block is LogistPipe pipe)
 					{
-						InterFace inter = Instantiate(Resources.Load<GameObject>("Pipe/InterFace")).GetComponent<InterFace>();
-						inter.gameObject.transform.position = new Vector3(transform.position.x + step[i] * 0.5f, transform.position.y + step[i + 4] * 0.5f, -1.5f);
-						build.InterFaces.Add(inter);
-						findbuilding[i] = inter;
+						findbuilding[i] = pipe;
+						if (!isstand)
+							pipe.UpdateMap();
+					}
+					else if (block is BaseBuild build)
+					{
+						if (findbuilding[i] is not InterFace nowinter || nowinter.block != build)
+						{
+							InterFace inter = Instantiate(Resources.Load<GameObject>("Pipe/InterFace")).GetComponent<InterFace>();
+							inter.gameObject.transform.position = new Vector3(transform.position.x + step[i] * 0.5f, transform.position.y + step[i + 4] * 0.5f, -1.5f);
+							build.InterFaces.Add(inter);
+							findbuilding[i] = inter;
+						}
+
+					}
+					else if (block is null)
+					{
+						if (findbuilding[i] is InterFace inter)
+						{
+							inter.Remove();
+							Destroy(inter.gameObject);
+						}
+						findbuilding[i] = null;
 					}
 				}
 
@@ -111,10 +128,10 @@ namespace Logist
 				router = null;
 				GC.Collect();//手动让垃圾回收器释放一下
 			}
-
+			ChooseImage();
 		}
 
-		private void ChooseMap()
+		public void ChooseImage()
 		{
 			//加载con_num对应贴图
 			if (con_num == 2 && !(findbuilding[0] ^ findbuilding[1]))
@@ -149,7 +166,6 @@ namespace Logist
 			con_num = 0;
 			for (int i = 0; i < 4; i++) findbuilding[i] = null;
 			FindBuilding(true);
-			ChooseMap();
 		}
 	}
 }

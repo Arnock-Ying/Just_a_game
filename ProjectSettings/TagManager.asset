@@ -6,6 +6,7 @@ TagManager:
   tags:
   - Building
   - Mineral
+  - Pipe
   layers:
   - Default
   - TransparentFX

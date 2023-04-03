@@ -146,11 +146,12 @@ namespace Logist
 			{
 				findbuilding[i] = false;
 				int[] step = { -1, 1, 0, 0, 0, 0, 1, -1 };
+
 				var block = MapManager.GetBlock(pos.x + step[i], pos.y + step[i + 4]);
 				if (block is BaseBuild || block is LogistPipe)
 				{
 					++con_num;
-					findbuilding[i] = block;
+					findbuilding[i] = true;
 				}
 			}
 			Sprite sprite;
@@ -162,13 +163,14 @@ namespace Logist
 			float ans = 0;
 			if (con_num == 0 || con_num == 4) ans = 0;
 			else if (con_num == 2 && !(findbuilding[0] ^ findbuilding[1]))
+			{
 				if (findbuilding[2]) ans = 90;
-				else ans = 0;
+			}
 			else
 			{
 				int[] und = { 2, 0, 3, 1 };
 				int cnt = 0;
-				for (int i = 0; (findbuilding[und[i]]) || !(findbuilding[und[(i + 1) % 4]]); ++i) ++cnt;
+				for (int i = 0; (findbuilding[und[i]]) || !(findbuilding[und[(i + 1) % 4]]); ++i) { if (i > 4) Debug.Log(i); ++cnt; }
 				if (con_num == 1) ans = 90 * (cnt);
 				else if (con_num == 2) ans = 90 * (cnt + 1);
 				else if (con_num == 3) ans = 90 * (cnt + 2);

@@ -95,10 +95,11 @@ public class BuildingProject : BaseBuild
 				if (Input.GetMouseButton(0) && !EventSystem.current.IsPointerOverGameObject())
 				{
 					var obj = Instantiate(gameObject);
-					MapManager.SetBuild(transform.position, projecting.size, this);
 					obj.transform.parent = transform.parent;
 					obj.SetActive(true);
-					obj.GetComponent<BuildingProject>().StandProject(projecting);
+					var pro = obj.GetComponent<BuildingProject>();
+					MapManager.SetBuild(transform.position, projecting.size, pro);
+					pro.StandProject(projecting);
 					obj.isStatic = true;
 				}
 			}

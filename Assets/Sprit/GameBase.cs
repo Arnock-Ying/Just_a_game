@@ -14,7 +14,8 @@ namespace GameBase
 	{
 		[SerializeField]
 		protected int hp = -1;
-		public Vector2Int size = new Vector2Int(1, 1);
+		public Vector2Int size = new(1, 1);
+		public virtual LogistNet ParentLogist { get { return null; } set { throw new System.Exception("have no LogistNet!"); } }
 
 		public bool Dismantle()
 		{
@@ -23,27 +24,27 @@ namespace GameBase
 
 		protected void UpdateLoglist()
 		{
-			Vector2Int pos = new(Mathf.FloorToInt(transform.position.x), Mathf.FloorToInt(this.transform.position.y));
+			Vector2Int pos = new(Mathf.FloorToInt(transform.position.x), Mathf.FloorToInt(transform.position.y));
 			for (int i = pos.x - Mathf.FloorToInt(size.x / 2.0f); i < pos.x + Mathf.CeilToInt(size.x / 2.0f); ++i)
 			{
-				if (MapManager.GetBlock(i, pos.y - Mathf.FloorToInt(size.y / 2.0f) - 1) is Logist.LogistPipe pipe1)
+				if (MapManager.GetBlock(i, pos.y - Mathf.FloorToInt(size.y / 2.0f) - 1) is LogistPipe pipe1)
 				{
-					pipe1.BuildPipe(true);
+					pipe1.BuildPipe(false);
 				}
-				if (MapManager.GetBlock(i, pos.y + Mathf.CeilToInt(size.y / 2.0f)) is Logist.LogistPipe pipe2)
+				if (MapManager.GetBlock(i, pos.y + Mathf.CeilToInt(size.y / 2.0f)) is LogistPipe pipe2)
 				{
-					pipe2.BuildPipe(true);
+					pipe2.BuildPipe(false);
 				}
 			}
 			for (int i = pos.y - Mathf.FloorToInt(size.y / 2.0f); i < pos.y + Mathf.CeilToInt(size.y / 2.0f); ++i)
 			{
-				if (MapManager.GetBlock(pos.x - Mathf.FloorToInt(size.x / 2.0f) - 1, i) is Logist.LogistPipe pipe1)
+				if (MapManager.GetBlock(pos.x - Mathf.FloorToInt(size.x / 2.0f) - 1, i) is LogistPipe pipe1)
 				{
-					pipe1.BuildPipe(true);
+					pipe1.BuildPipe(false);
 				}
-				if (MapManager.GetBlock(pos.x + Mathf.CeilToInt(size.x / 2.0f), i) is Logist.LogistPipe pipe2)
+				if (MapManager.GetBlock(pos.x + Mathf.CeilToInt(size.x / 2.0f), i) is LogistPipe pipe2)
 				{
-					pipe2.BuildPipe(true);
+					pipe2.BuildPipe(false);
 				}
 			}
 		}
@@ -52,7 +53,7 @@ namespace GameBase
 		{
 			MapManager.SetBuild(transform.position, size, null);
 			UpdateLoglist();
-			Destroy(this.gameObject);
+			Destroy(gameObject);
 		}
 	}
 
@@ -63,10 +64,12 @@ namespace GameBase
 	{
 		[SerializeField]
 		protected int maxInvent = 0;
-		protected int localip;
-		protected LogistNet fatherLogist = null;
-		protected EnergyNet fatherEngrgy;
+		protected byte localip;
+		protected LogistNet privateLogist = null;
+		protected EnergyNet privateEngrgy;
 		protected Inventory invent = null;
+		public byte Ip { get => localip; }
+		public override LogistNet ParentLogist { get => privateLogist; set => privateLogist = value; }
 		public List<InterFace> InterFaces { get; } = new();
 
 		/// <summary>
@@ -75,12 +78,26 @@ namespace GameBase
 		/// <returns></returns>
 		public string GetIP()
 		{
-			if (fatherLogist == null)
+			if (privateLogist == null)
 				return localip.ToString();
 			else
-				return fatherLogist.manager.GetIP() + '.' + localip;
+				return $"{privateLogist.manager.GetIP()}.{localip}";
 		}
 
+		/// <summary>
+		/// 设置ip 为物流网络分配ip设置的接口，请勿调用！
+		/// </summary>
+		/// <returns></returns>
+		public void SetIP(byte i)
+		{
+			localip = i;
+		}
+
+		public override void DestroyBlock()
+		{
+			privateLogist.DelIp(this);
+			base.DestroyBlock();
+		}
 	}
 
 	public class Formula
@@ -149,7 +166,126 @@ namespace GameBase
 	/// </summary>
 	public class LogistNet
 	{
-		public LogistCentral manager;
+		public BaseBuild manager = null;
+		private int maxIpNum = 1;
+		private int count = 1;
+		static private readonly int selfNetNum = 8;
+
+		private readonly BaseBuild[] builds = new BaseBuild[256];
+
+		public bool SetManager(BaseBuild manager)
+		{
+			if (manager == null)
+			{
+				maxIpNum = 0;
+				return false;
+			}
+			if (manager is LogistCentral logist)
+			{
+				maxIpNum = logist.MaxIPNum();
+				if (maxIpNum > 256) maxIpNum = 256;
+			}
+			else
+			{
+				maxIpNum = selfNetNum;
+			}
+
+			builds[0] = manager;
+			manager.SetIP(0);
+			manager.ParentLogist = this;
+			return true;
+		}
+		public bool SetIp(BaseBuild block)
+		{
+			int min = -1;
+			for (int i = 1; i < maxIpNum; ++i)
+			{
+				if (builds[i] == null && min == -1)
+					min = i;
+				if (block == builds[i])
+					return true;
+			}
+
+			if (min == -1) return false;
+
+			builds[min] = block;
+			block.SetIP((byte)min);
+			block.ParentLogist = this;
+			count += 1;
+			return true;
+		}
+		public bool DelIp(BaseBuild block)
+		{
+			int ip = block.Ip;
+			if (builds[ip] == block)
+			{
+				builds[ip] = null;
+				block.ParentLogist = null;
+				--count;
+				return true;
+			}
+			return false;
+		}
+		public static LogistNet Marge(LogistNet net1, LogistNet net2)
+		{
+			if (net1 == null && net2 != null)
+			{
+				Debug.Log("net1 == null && net2 != null");
+				return net2;
+			}
+
+			if (net1 != null && net2 == null)
+			{
+				Debug.Log("net1 != null && net2 == null");
+				return net1;
+			}
+
+			if (net1 == net2)
+			{
+				Debug.Log("net1 == net2");
+				return net1;
+			}
+
+			if (net1.count + net2.count > Mathf.Max(net1.maxIpNum, net2.maxIpNum))
+			{
+				Debug.Log($"net1.count:{net1.count} + net2.count:{net2.count} > Mathf.Max(net1.maxIpNum:{net1.maxIpNum}, net2.maxIpNum:{net2.maxIpNum})");
+				throw new System.Exception("net is too big");
+			}
+
+			if (net2.manager is LogistCentral && net2.manager is LogistCentral)
+			{
+				Debug.Log("net2.manager is LogistCentral && net2.manager is LogistCentral");
+				throw new System.Exception("try to link two net with different central");
+			}
+
+			LogistNet outNet, inNet;
+			outNet = net1.maxIpNum >= net2.maxIpNum ? net1 : net2;
+			inNet = net1.maxIpNum >= net2.maxIpNum ? net2 : net1;
+			for (int i = 0; i < inNet.maxIpNum; ++i)
+			{
+				if (inNet.builds[i] != null)
+					if (!outNet.SetIp(inNet.builds[i])) return null;
+			}
+			Debug.Log("others");
+			return outNet;
+
+			//if (net1 == null && net2 != null) return net2;
+			//if (net1 != null && net2 == null) return net1;
+			//if (net1 == net2) return net1;
+			//if (net1.count + net2.count > Mathf.Max(net1.maxIpNum, net2.maxIpNum))
+			//	return null;
+			//if (net2.manager is LogistCentral && net2.manager is LogistCentral)
+			//	return null;
+			//LogistNet outNet, inNet;
+			//outNet = net1.maxIpNum >= net2.maxIpNum ? net1 : net2;
+			//inNet = net1.maxIpNum >= net2.maxIpNum ? net2 : net1;
+			//for (int i = 0; i < inNet.maxIpNum; ++i)
+			//{
+			//	if (inNet.builds[i] != null)
+			//		if (!outNet.SetIp(inNet.builds[i])) break;
+			//}
+			//return outNet;
+		}
 	}
 
 	/// <summary>

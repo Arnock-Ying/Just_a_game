@@ -5,6 +5,7 @@ using UnityEngine.EventSystems;
 
 using GameBase;
 using Manager;
+using Logist;
 
 ///<summary>
 ///建筑规划
@@ -74,7 +75,7 @@ public class BuildingProject : BaseBuild
 	bool fin = false;
 	private void Update()
 	{
-		fin = projecting is Logist.LogistPipe;
+		fin = projecting is LogistPipe;
 		//Debug.Log(prefab);
 		//建造完成
 		if (!isholding && fin && projecting.gameObject)
@@ -103,9 +104,9 @@ public class BuildingProject : BaseBuild
 					obj.isStatic = true;
 				}
 			}
-			if (projecting is Logist.LogistPipe)
+			if (projecting is LogistPipe)
 			{
-				var pair = Logist.LogistPipe.GetImageAndAngles(transform.position);
+				var pair = LogistPipe.GetImageAndAngles(transform.position);
 				spr.sprite = pair.Key;
 				transform.eulerAngles = new Vector3(0, 0, pair.Value);
 			}

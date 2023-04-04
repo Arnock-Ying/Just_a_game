@@ -8,16 +8,11 @@ using GameBase;
 
 public class Construction : MonoBehaviour
 {
-	//[SerializeField]
 	private Vector2 temp;
-	//[SerializeField]
 	private Vector3 pos;
 	private Vector3 mouse_pos;
-	//[SerializeField]
 	Button last_button = null;
-	//[SerializeField]
 	GameObject selected_prefab = null;
-	//[SerializeField]
 	GameObject now_holding = null;
 	Block selected_block = null;
 
@@ -93,7 +88,7 @@ public class Construction : MonoBehaviour
 		selected_block = selected_prefab.GetComponent<Block>();
 		if (!now_holding)
 		{
-			GameObject pro = new GameObject("project");
+			GameObject pro = new("project");
 			pro.AddComponent<BuildingProject>().SetProject(selected_prefab);
 			now_holding = pro;
 		}

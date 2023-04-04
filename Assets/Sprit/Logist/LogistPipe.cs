@@ -24,9 +24,12 @@ namespace Logist
 		int con_num = 0;    //连接数量
 		Block[] findbuilding = new Block[4];//上下左右是否有建筑
 
+		private LogistNet parentLogist = null;
+		public override LogistNet ParentLogist { get => parentLogist; set => parentLogist = value; }
+
 		private void Start()
 		{
-			BuildPipe(false);
+			BuildPipe(true);
 		}
 
 		private void FixedUpdate()
@@ -62,7 +65,11 @@ namespace Logist
 			{
 				bool back = router.ChangeRoute(rout, dir);
 				for (int i = 0; i < 4; ++i)
-					if ((((int)dir != i) ^ back) && findbuilding[i] != null)
+					if (((int)dir != i) && findbuilding[i] != null)
+					{
+						if (findbuilding[i] is LogistPipe pipe) pipe.setRelayRoute(router.IpTable, (Dircation)i);
+					}
+					else if (back && findbuilding[i] != null)
 					{
 						if (findbuilding[i] is LogistPipe pipe) pipe.setRelayRoute(router.IpTable, (Dircation)i);
 					}
@@ -70,7 +77,7 @@ namespace Logist
 			}
 		}
 
-		public void BuildPipe(bool isstand)
+		public void BuildPipe(bool rebuild)
 		{
 			Vector2Int pos = new(Mathf.FloorToInt(transform.position.x), Mathf.FloorToInt(transform.position.y));
 			//Debug.Log(pos);
@@ -86,12 +93,12 @@ namespace Logist
 					if (block is BaseBuild build)
 					{
 						con_num++;
-						if (findbuilding[i] is not InterFace nowinter || nowinter.block != build)
+						if (findbuilding[i] is not InterFace nowinter || nowinter.build != build)
 						{
 							InterFace inter = Instantiate(Resources.Load<GameObject>("Pipe/InterFace")).GetComponent<InterFace>();
 							inter.gameObject.transform.position = new Vector3(transform.position.x + step[i] * 0.5f, transform.position.y + step[i + 4] * 0.5f, -1.5f);
 							build.InterFaces.Add(inter);
-							inter.block = build;
+							inter.build = build;
 							inter.pipe = this;
 							findbuilding[i] = inter;
 						}
@@ -103,8 +110,9 @@ namespace Logist
 
 						con_num++;
 						findbuilding[i] = pipe;
-						if (!isstand)
-							pipe.BuildPipe(true);
+
+						if (rebuild)
+							pipe.BuildPipe(false);
 					}
 				}
 				else
@@ -132,8 +140,59 @@ namespace Logist
 				GC.Collect();//手动让垃圾回收器释放一下
 			}
 			ChooseImage();
-			Dictionary<int, int> x = new();
-			foreach (var i in x) ;
+
+			if (!rebuild)
+			{
+
+				//处理物流网络信息
+				for (int i = 0; i < 4; ++i)
+				{
+					if (findbuilding[i] == null) continue;
+					else if (findbuilding[i] is LogistPipe pipe)
+					{
+						LogistNet tempnet = null;
+						//Debug.Log($"{(parentLogist == null ? "null" : "logist")},{(block.ParentLogist == null ? "null" : "logist")}");
+						try
+						{
+							tempnet = LogistNet.Marge(parentLogist, pipe.ParentLogist);
+						}
+						catch (System.Exception exc)
+						{
+							Debug.LogError(exc.Message);
+						}
+						finally
+						{
+							parentLogist = pipe.ParentLogist = tempnet;
+						}
+					}
+					else if (findbuilding[i] is InterFace inter)
+					{
+						if (parentLogist == null) parentLogist = new LogistNet();
+						ushort[] vs = null;
+						if (parentLogist.manager == null || inter.build is LogistCentral)
+						{
+							if (parentLogist.SetManager(inter.build))
+							{
+								vs = Router.MakeTable(0, (Dircation)i);
+							}
+							else
+							{
+								Debug.Log("set massgae false");
+							}
+						}
+						else
+						{
+							if (parentLogist.SetIp(inter.build))
+							{
+								vs = Router.MakeTable(inter.build.Ip, (Dircation)i);
+								Debug.Log("set ip false");
+							}
+						}
+						if (vs != null)
+							setRelayRoute(vs, (Dircation)(i ^ 1));
+					}
+				}
+			}
 		}
 
 		public static KeyValuePair<Sprite, float> GetImageAndAngles(Vector3 position)
@@ -155,11 +214,14 @@ namespace Logist
 				}
 			}
 			Sprite sprite;
+			//加载con_num对应贴图
 			if (con_num == 2 && !(findbuilding[0] ^ findbuilding[1]))
 				sprite = LogistManager.Instend.PipeImage[5];
 			else
 				sprite = LogistManager.Instend.PipeImage[con_num];
 
+			//旋转
+			//Debug.Log(cnt + "--(" + und[i] + "," + und[(i + 1) % 4] + ")" + (findbuilding[und[i]] != null) + ":" + (findbuilding[und[(i + 1) % 4]] != null));
 			float ans = 0;
 			if (con_num == 0 || con_num == 4) ans = 0;
 			else if (con_num == 2 && !(findbuilding[0] ^ findbuilding[1]))
@@ -183,39 +245,6 @@ namespace Logist
 			var pair = GetImageAndAngles(this.transform.position);
 			spr.sprite = pair.Key;
 			transform.eulerAngles = new Vector3(0, 0, pair.Value);
-			////加载con_num对应贴图
-			//if (con_num == 2 && !(findbuilding[0] ^ findbuilding[1]))
-			//	spr.sprite = LogistManager.Instend.PipeImage[5];
-			//else
-			//	spr.sprite = LogistManager.Instend.PipeImage[con_num];
-			////旋转
-			//Debug.Log(con_num);
-			//if (con_num == 0 || con_num == 4) return;
-			//if (con_num == 2 && !(findbuilding[0] ^ findbuilding[1]))
-			//{
-			//	if (findbuilding[2]) transform.eulerAngles = new Vector3(0, 0, 90);
-			//}
-			//else
-			//{
-			//	int[] und = { 2, 0, 3, 1 };
-			//	int cnt = 0;
-			//	for (int i = 0; (findbuilding[und[i]]) || !(findbuilding[und[(i + 1) % 4]]); ++i)
-			//	{
-			//		//Debug.Log(cnt + "--(" + und[i] + "," + und[(i + 1) % 4] + ")" + (findbuilding[und[i]] != null) + ":" + (findbuilding[und[(i + 1) % 4]] != null));
-			//		++cnt;
-			//	}
-
-			//	if (con_num == 1) transform.eulerAngles = new Vector3(0, 0, 90 * (cnt));
-			//	else if (con_num == 2) transform.eulerAngles = new Vector3(0, 0, 90 * (cnt + 1));
-			//	else if (con_num == 3) transform.eulerAngles = new Vector3(0, 0, 90 * (cnt + 2));
-			//}
-		}
-
-		private void UpdateMap()
-		{
-			con_num = 0;
-			for (int i = 0; i < 4; i++) findbuilding[i] = null;
-			BuildPipe(true);
 		}
 	}
 }

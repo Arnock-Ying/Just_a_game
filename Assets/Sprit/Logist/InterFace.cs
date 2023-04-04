@@ -6,12 +6,17 @@ namespace Logist
 {
 	public class InterFace : Block
 	{
-		public BaseBuild block;
+		public BaseBuild build;
 		public LogistPipe pipe;
+
+		public void Init()
+		{
+			
+		}
 
 		public override void DestroyBlock()
 		{
-			block.InterFaces.Remove(this);
+			build.InterFaces.Remove(this);
 			Destroy(this.gameObject);
 		}
 	}

@@ -56,7 +56,7 @@ namespace Logist
 			int dir = (int)_dir ^ 1;
 			for (int i = 0; i < 256; ++i)
 			{
-				if (ipTable[i] == 0 )
+				if (ipTable[i] == 0)
 				{
 					if ((vs[i] ^ dir) == 0)
 						vs[i] = 0;
@@ -69,6 +69,13 @@ namespace Logist
 				}
 			}
 			return change;
+		}
+
+		public static ushort[] MakeTable(byte ip, Dircation dir, int len = 1)
+		{
+			ushort[] vs = new ushort[256];
+			vs[ip] = (ushort)((len << 2) | ((byte)dir & 3));
+			return vs;
 		}
 	}
 }

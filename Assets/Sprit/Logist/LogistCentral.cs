@@ -11,6 +11,9 @@ namespace Logist
 	{
 		private LogistNet managedlogist;
 		private SpriteRenderer spriteRenderer;
+		[SerializeField]
+		private int maxIpNum = 32;
+		public int MaxIPNum() { return maxIpNum; }
 
 		void Start()
 		{

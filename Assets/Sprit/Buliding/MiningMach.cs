@@ -15,7 +15,7 @@ public class MiningMach : BaseBuild
 	[SerializeField]
 	private int dig_num = 1;
 	private float timer = 0;
-	private float delayTime = 1;
+	private const float delayTime = 1;
 	private bool noinit = true;
 
 	private void Start()

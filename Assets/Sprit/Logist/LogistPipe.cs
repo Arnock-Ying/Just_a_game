@@ -11,11 +11,7 @@ namespace Logist
 	{
 		[SerializeField]
 		SpriteRenderer spr;
-		LogistNet net;
-
-		//debug
-		[SerializeField]
-		string debug;
+		LogistNetBlock net;
 
 		Router router = null;
 		ushort[] temp_rout = null, inter_rout = null;
@@ -24,8 +20,8 @@ namespace Logist
 		int con_num = 0;    //连接数量
 		Block[] findbuilding = new Block[4];//上下左右是否有建筑
 
-		private LogistNet parentLogist = null;
-		public override LogistNet ParentLogist { get => parentLogist; set => parentLogist = value; }
+		private LogistNetBlock parentLogist = null;
+		public override LogistNetBlock ParentLogist { get => parentLogist; set => parentLogist = value; }
 
 		private void Start()
 		{
@@ -41,7 +37,11 @@ namespace Logist
 					temp_rout = inter_rout;
 					temp_dir = inter_dir;
 				}
-			debug = router == null ? "null" : "router";
+			debug = "Router = " + (router == null ? "null" : "router") +
+				"," + (parentLogist == null ? "nullnet" :
+				" LogistNetBlock = " + (parentLogist.Build == null ? "null" : parentLogist.Build.name)
+				+ ":" + parentLogist.id) + "\n" +
+				" LogistNet = " + (parentLogist.ParentNet == null ? "null" : "Net id:" + parentLogist.ParentNet.id);
 		}
 
 		public void setRelayRoute(ushort[] rout, Dircation dir)
@@ -141,55 +141,96 @@ namespace Logist
 			}
 			ChooseImage();
 
-			if (!rebuild)
+			if (rebuild)
 			{
-
+				//if (parentLogist == null) parentLogist = new LogistNetBlcok();
 				//处理物流网络信息
+				SetParentLogist();
+			}
+		}
+		public void SetParentLogist()
+		{
+			int[] counts = new int[4];
+			for (int i = 0; i < 4; ++i)
+			{
+				if (findbuilding[i] == null) counts[i] = -1;
+				else if (findbuilding[i] is LogistPipe pipe)
+					counts[i] = pipe.ParentLogist.Count;
+				else if (findbuilding[i] is InterFace inter)
+					counts[i] = 0;
+			}
+
+			int min = 0;
+			int minnum = -1;
+			for (int i = 0; i < 4; ++i)
+			{
+				if (minnum == -1 || (minnum > counts[i] && counts[i] >= 0))
+				{
+					min = i;
+					minnum = counts[i];
+				}
+			}
+
+			if (minnum == -1) this.parentLogist = new();
+			else if (findbuilding[min] is InterFace inter)
+			{
+				this.parentLogist = new();
+				parentLogist.Build = inter.build;
+			}
+			else
+			{
+				parentLogist = findbuilding[min].ParentLogist;
+			}
+			parentLogist.Add(this);
+
+			if (parentLogist.Build == null)
+			{
 				for (int i = 0; i < 4; ++i)
 				{
-					if (findbuilding[i] == null) continue;
+					if (findbuilding[i] == null) counts[i] = -2;
 					else if (findbuilding[i] is LogistPipe pipe)
+						counts[i] = (pipe.ParentLogist.Build == null ? -1 : pipe.ParentLogist.Count);
+					else if (findbuilding[i] is InterFace)
+						counts[i] = 0;
+				}
+				int min2 = 0;
+				int minnum2 = -2;
+				for (int i = 0; i < 4; ++i)
+				{
+					if (minnum2 < 0 || (minnum2 > counts[i] && counts[i] >= 0))
 					{
-						LogistNet tempnet = null;
-						//Debug.Log($"{(parentLogist == null ? "null" : "logist")},{(block.ParentLogist == null ? "null" : "logist")}");
-						try
-						{
-							tempnet = LogistNet.Marge(parentLogist, pipe.ParentLogist);
-						}
-						catch (System.Exception exc)
-						{
-							Debug.LogError(exc.Message);
-						}
-						finally
-						{
-							parentLogist = pipe.ParentLogist = tempnet;
-						}
+						min2 = i;
+						minnum2 = counts[i];
 					}
-					else if (findbuilding[i] is InterFace inter)
+				}
+				if (minnum2 != -2)
+				{
+					findbuilding[min2].ParentLogist.Marge(this.ParentLogist);
+					GC.Collect();
+				}
+			}
+			else
+			{
+				for (int i = 0; i < 4; ++i)
+				{
+					if (findbuilding[i] is LogistPipe pipe)
 					{
-						if (parentLogist == null) parentLogist = new LogistNet();
-						ushort[] vs = null;
-						if (parentLogist.manager == null || inter.build is LogistCentral)
+						if (pipe.ParentLogist.Build == null)
+							ParentLogist.Marge(pipe.ParentLogist);
+						else if (ParentLogist.ParentNet != pipe.ParentLogist.ParentNet
+							&& LogistNet.BuildSum(ParentLogist.ParentNet, pipe.ParentLogist.ParentNet)
+							<= Math.Max(ParentLogist.ParentNet.MaxIpNum, pipe.ParentLogist.ParentNet.MaxIpNum)
+							&& !(ParentLogist.ParentNet.manager is LogistCentral && pipe.ParentLogist.ParentNet.manager is LogistCentral))
 						{
-							if (parentLogist.SetManager(inter.build))
-							{
-								vs = Router.MakeTable(0, (Dircation)i);
-							}
+							bool choose = ParentLogist.ParentNet.MaxIpNum >= pipe.ParentLogist.ParentNet.MaxIpNum;
+							if (choose)
+								ParentLogist.ParentNet.Marge(pipe.ParentLogist.ParentNet);
 							else
-							{
-								Debug.Log("set massgae false");
-							}
+								pipe.ParentLogist.ParentNet.Marge(ParentLogist.ParentNet);
+
+							GC.Collect();
 						}
-						else
-						{
-							if (parentLogist.SetIp(inter.build))
-							{
-								vs = Router.MakeTable(inter.build.Ip, (Dircation)i);
-								Debug.Log("set ip false");
-							}
-						}
-						if (vs != null)
-							setRelayRoute(vs, (Dircation)(i ^ 1));
+
 					}
 				}
 			}

@@ -15,8 +15,11 @@ namespace GameBase
 		[SerializeField]
 		protected int hp = -1;
 		public Vector2Int size = new(1, 1);
-		public virtual LogistNet ParentLogist { get { return null; } set { throw new System.Exception("have no LogistNet!"); } }
-
+		public virtual LogistNetBlock ParentLogist { get { return null; } set { throw new System.Exception("have no LogistNet!"); } }
+		//debug
+		[SerializeField]
+		[TextArea]
+		protected string debug;
 		public bool Dismantle()
 		{
 			return false;
@@ -64,12 +67,13 @@ namespace GameBase
 	{
 		[SerializeField]
 		protected int maxInvent = 0;
+		[SerializeField]
 		protected byte localip;
-		protected LogistNet privateLogist = null;
+		protected LogistNetBlock privateLogist = null;
 		protected EnergyNet privateEngrgy;
 		protected Inventory invent = null;
 		public byte Ip { get => localip; }
-		public override LogistNet ParentLogist { get => privateLogist; set => privateLogist = value; }
+		public override LogistNetBlock ParentLogist { get => privateLogist; set => privateLogist = value; }
 		public List<InterFace> InterFaces { get; } = new();
 
 		/// <summary>
@@ -81,7 +85,7 @@ namespace GameBase
 			if (privateLogist == null)
 				return localip.ToString();
 			else
-				return $"{privateLogist.manager.GetIP()}.{localip}";
+				return $"{privateLogist.ParentNet.manager.GetIP()}.{localip}";
 		}
 
 		/// <summary>
@@ -95,7 +99,7 @@ namespace GameBase
 
 		public override void DestroyBlock()
 		{
-			privateLogist.DelIp(this);
+			privateLogist.ParentNet.DelIp(this);
 			base.DestroyBlock();
 		}
 	}
@@ -166,13 +170,23 @@ namespace GameBase
 	/// </summary>
 	public class LogistNet
 	{
-		public BaseBuild manager = null;
-		private int maxIpNum = 1;
+		public BaseBuild manager { get { return builds[0]; } }
+		private int maxIpNum = 8;
 		private int count = 1;
 		static private readonly int selfNetNum = 8;
+		public readonly int id;
+		static int nowid = 0;
+		public List<LogistNetBlock> Blocks { get; } = new();
+		public int Count { get => count; }
+		public int MaxIpNum { get => maxIpNum; }
 
 		private readonly BaseBuild[] builds = new BaseBuild[256];
 
+		public LogistNet()
+		{
+			id = nowid;
+			nowid++;
+		}
 		public bool SetManager(BaseBuild manager)
 		{
 			if (manager == null)
@@ -192,7 +206,7 @@ namespace GameBase
 
 			builds[0] = manager;
 			manager.SetIP(0);
-			manager.ParentLogist = this;
+			manager.ParentLogist.ParentNet = this;
 			return true;
 		}
 		public bool SetIp(BaseBuild block)
@@ -210,7 +224,7 @@ namespace GameBase
 
 			builds[min] = block;
 			block.SetIP((byte)min);
-			block.ParentLogist = this;
+			block.ParentLogist.ParentNet = this;
 			count += 1;
 			return true;
 		}
@@ -226,65 +240,68 @@ namespace GameBase
 			}
 			return false;
 		}
-		public static LogistNet Marge(LogistNet net1, LogistNet net2)
+
+		public void Marge(LogistNet net)
 		{
-			if (net1 == null && net2 != null)
+			if (net == this) return;
+			foreach (var i in net.Blocks)
 			{
-				Debug.Log("net1 == null && net2 != null");
-				return net2;
+				if (!Blocks.Contains(i))
+				{
+					Blocks.Add(i);
+					i.ParentNet = this;
+				}
 			}
-
-			if (net1 != null && net2 == null)
+			net.Blocks.Clear();
+		}
+		public static int BuildSum(LogistNet net1, LogistNet net2)
+		{
+			int sum = net1.count + net2.count - 1;
+			for (int i = 1; i < net1.maxIpNum; ++i)
 			{
-				Debug.Log("net1 != null && net2 == null");
-				return net1;
+				for (int j = i; j < net2.maxIpNum; ++j)
+				{
+					if (net1.builds[i] == net2.builds[j]) --sum;
+				}
 			}
+			return sum;
+		}
+	}
 
-			if (net1 == net2)
+	public class LogistNetBlock
+	{
+		public readonly int id;
+		static int nowid = 0;
+		readonly List<LogistPipe> pipes = new();
+		public LogistNet ParentNet { get; set; } = new();
+		public int Count { get => pipes.Count; }
+		public BaseBuild Build { get; set; } = null;
+		public LogistNetBlock()
+		{
+			id = nowid;
+			nowid++;
+			ParentNet.Blocks.Add(this);
+		}
+		public void Add(LogistPipe pipe)
+		{
+			pipes.Add(pipe);
+		}
+
+		public void Remove(LogistPipe pipe)
+		{
+			pipes.Remove(pipe);
+		}
+
+		public void Marge(LogistNetBlock netblock)
+		{
+			if (netblock.pipes.Count == 0) return;
+			if (netblock == this) return;
+			foreach (var i in netblock.pipes)
 			{
-				Debug.Log("net1 == net2");
-				return net1;
+				pipes.Add(i);
+				i.ParentLogist = this;
 			}
-
-			if (net1.count + net2.count > Mathf.Max(net1.maxIpNum, net2.maxIpNum))
-			{
-				Debug.Log($"net1.count:{net1.count} + net2.count:{net2.count} > Mathf.Max(net1.maxIpNum:{net1.maxIpNum}, net2.maxIpNum:{net2.maxIpNum})");
-				throw new System.Exception("net is too big");
-			}
-
-			if (net2.manager is LogistCentral && net2.manager is LogistCentral)
-			{
-				Debug.Log("net2.manager is LogistCentral && net2.manager is LogistCentral");
-				throw new System.Exception("try to link two net with different central");
-			}
-
-			LogistNet outNet, inNet;
-			outNet = net1.maxIpNum >= net2.maxIpNum ? net1 : net2;
-			inNet = net1.maxIpNum >= net2.maxIpNum ? net2 : net1;
-			for (int i = 0; i < inNet.maxIpNum; ++i)
-			{
-				if (inNet.builds[i] != null)
-					if (!outNet.SetIp(inNet.builds[i])) return null;
-			}
-			Debug.Log("others");
-			return outNet;
-
-			//if (net1 == null && net2 != null) return net2;
-			//if (net1 != null && net2 == null) return net1;
-			//if (net1 == net2) return net1;
-			//if (net1.count + net2.count > Mathf.Max(net1.maxIpNum, net2.maxIpNum))
-			//	return null;
-			//if (net2.manager is LogistCentral && net2.manager is LogistCentral)
-			//	return null;
-			//LogistNet outNet, inNet;
-			//outNet = net1.maxIpNum >= net2.maxIpNum ? net1 : net2;
-			//inNet = net1.maxIpNum >= net2.maxIpNum ? net2 : net1;
-			//for (int i = 0; i < inNet.maxIpNum; ++i)
-			//{
-			//	if (inNet.builds[i] != null)
-			//		if (!outNet.SetIp(inNet.builds[i])) break;
-			//}
-			//return outNet;
+			netblock.pipes.Clear();
 		}
 	}
 

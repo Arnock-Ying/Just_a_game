@@ -8,6 +8,7 @@ namespace Logist
 	{
 		public BaseBuild build;
 		public LogistPipe pipe;
+		public Dircation dir;
 		[SerializeField]
 		protected byte localip;
 		public byte Ip { get => localip; }
@@ -39,6 +40,11 @@ namespace Logist
 		public void Init()
 		{
 
+		}
+
+		public void SendRouter()
+		{
+			pipe.setRelayRoute(Router.MakeTable(localip, dir), dir);
 		}
 
 		public override void DestroyBlock()

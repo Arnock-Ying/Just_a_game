@@ -14,8 +14,7 @@ namespace Logist
 		LogistNetBlock net;
 
 		Router router = null;
-		ushort[] temp_rout = null, inter_rout = null;
-		Dircation temp_dir = 0, inter_dir = 0;
+		ushort[][] temp_rout = new ushort[4][], inter_rout = new ushort[4][];
 
 		int con_num = 0;    //连接数量
 		Block[] findbuilding = new Block[4];//上下左右是否有建筑
@@ -30,54 +29,56 @@ namespace Logist
 
 		private void FixedUpdate()
 		{
-			if (router != null)
-				if (temp_rout != null && inter_rout != null)
-				{
-					if (temp_rout != null) relayRoute(temp_rout, temp_dir);
-					temp_rout = inter_rout;
-					temp_dir = inter_dir;
-				}
-			debug = $"Router = {(router == null ? "null" : "router")},"
-				 + (parentLogist == null ? "nullnet" :
-				  $" LogistNetBlock = {(parentLogist.Inter == null ? "null" : parentLogist.Inter.name)} : {parentLogist.id}")
+			for (int i = 0; i < 4; ++i)
+			{
+				if (temp_rout[i] != null) relayRoute(temp_rout[i], (Dircation)i);
+				temp_rout[i] = inter_rout[i];
+				inter_rout[i] = null;
+			}
+			debug = (parentLogist == null ? "nullnet" :
+				  $" LogistNetBlock = {(parentLogist.Inter == null ? "null" : parentLogist.Inter.build.name)} : {parentLogist.id}")
 				 + $" LogistNet = {(parentLogist.ParentNet == null ? "null" : "Net id:" + parentLogist.ParentNet.id)}\n";
-
 
 			if (router != null)
 			{
 				debug += $"router {parentLogist.ParentNet.MaxIpNum}:\n";
-				for (byte i = 0; i < parentLogist.ParentNet.MaxIpNum; ++i) debug += $"dir: {router.Dir(i)},len: {router.Len(i)}\n";
+				for (byte i = 0; i < parentLogist.ParentNet.MaxIpNum; ++i)
+					debug += $"ip: {i}, dir: {router.Dir(i)}, len: {router.Len(i)}\n";
 			}
 		}
 
 		public void setRelayRoute(ushort[] rout, Dircation dir)
 		{
-			inter_rout = rout; inter_dir = dir;
+			inter_rout[(int)dir] = rout;
 		}
 		private void relayRoute(ushort[] rout, Dircation dir)
 		{
-			if (con_num < 2) return;
+			if (con_num <= 1) return;
 			if (router == null)
 			{
 				for (int i = 0; i < 256; ++i)
 					if (rout[i] != 0) rout[i] += 4;
 				for (int i = 0; i < 4; ++i)
-					if ((int)dir != i && findbuilding[i] != null)
+					if ((int)dir != (i ^ 1) && findbuilding[i] != null)
 					{
-						if (findbuilding[i] is LogistPipe pipe) pipe.setRelayRoute(rout, (Dircation)i);
+						if (findbuilding[i] is LogistPipe pipe)
+						{
+							Debug.Log(transform.position + "pipe with null nouter to" + (Dircation)i);
+							pipe.setRelayRoute(rout, (Dircation)(i));
+						}
 					}
 			}
 			else
 			{
 				bool back = router.ChangeRoute(rout, dir);
 				for (int i = 0; i < 4; ++i)
-					if (((int)dir != i) && findbuilding[i] != null)
+					if (((int)dir != (i ^ 1)) && findbuilding[i] != null)
 					{
-						if (findbuilding[i] is LogistPipe pipe) pipe.setRelayRoute(router.IpTable, (Dircation)i);
+						if (findbuilding[i] is LogistPipe pipe) pipe.setRelayRoute(router.CopyIpTable(), (Dircation)(i));
 					}
 					else if (back && findbuilding[i] != null)
 					{
-						if (findbuilding[i] is LogistPipe pipe) pipe.setRelayRoute(router.IpTable, (Dircation)i);
+						if (findbuilding[i] is LogistPipe pipe) pipe.setRelayRoute(router.CopyIpTable(), (Dircation)(i));
 					}
 				GC.Collect();//手动让垃圾回收器释放一下
 			}
@@ -90,7 +91,7 @@ namespace Logist
 			con_num = 0;
 			for (int i = 0; i < 4; i++)
 			{
-				int[] step = { -1, 1, 0, 0, 0, 0, 1, -1 };
+				int[] step = { 0, 0, -1, 1, 1, -1, 0, 0 };
 				var block = MapManager.GetBlock(pos.x + step[i], pos.y + step[i + 4]);
 				//Debug.Log(block);
 
@@ -106,6 +107,7 @@ namespace Logist
 							build.InterFaces.Add(inter);
 							inter.build = build;
 							inter.pipe = this;
+							inter.dir = (Dircation)(i ^ 1);
 							findbuilding[i] = inter;
 						}
 					}
@@ -256,15 +258,10 @@ namespace Logist
 				}
 			}
 
+
 			//释放合并所产生的垃圾空间
 			GC.Collect();
 			return;
-		}
-
-		public void SendRout()
-		{
-
-			//setRelayRoute();
 		}
 
 		public static KeyValuePair<Sprite, float> GetImageAndAngles(Vector3 position)
@@ -273,10 +270,11 @@ namespace Logist
 			//Debug.Log(pos);
 			int con_num = 0;
 			bool[] findbuilding = new bool[4];
+			int[] step = { -1, 1, 0, 0, 0, 0, 1, -1 };
 			for (int i = 0; i < 4; i++)
 			{
 				findbuilding[i] = false;
-				int[] step = { -1, 1, 0, 0, 0, 0, 1, -1 };
+
 
 				var block = MapManager.GetBlock(pos.x + step[i], pos.y + step[i + 4]);
 				if (block is BaseBuild || block is LogistPipe)

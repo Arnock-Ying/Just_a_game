@@ -226,6 +226,10 @@ namespace GameBase
 				}
 			}
 			net.Blocks.Clear();
+			foreach (var i in Blocks)
+			{
+				i.Inter.SendRouter();
+			}
 		}
 		public static int BuildSum(LogistNet net1, LogistNet net2)
 		{

@@ -18,11 +18,11 @@ namespace Logist
 
 		public ushort[] IpTable { get { return (ushort[])vs.Clone(); } }
 
-		private int Len(byte ip)
+		public int Len(byte ip)
 		{
 			return vs[ip] >> 2;
 		}
-		private Dircation Dir(byte ip)
+		public Dircation Dir(byte ip)
 		{
 			return (Dircation)(vs[ip] & 3);
 		}

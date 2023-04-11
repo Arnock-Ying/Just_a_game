@@ -18,7 +18,7 @@ namespace GameBase
 		public virtual LogistNetBlock ParentLogist { get { return null; } set { throw new System.Exception("have no LogistNet!"); } }
 		//debug
 		[SerializeField]
-		[TextArea]
+		[TextArea(1, 100)]
 		protected string debug;
 		public bool Dismantle()
 		{
@@ -67,41 +67,14 @@ namespace GameBase
 	{
 		[SerializeField]
 		protected int maxInvent = 0;
-		[SerializeField]
-		protected byte localip;
+
 		protected LogistNetBlock privateLogist = null;
 		protected EnergyNet privateEngrgy;
 		protected Inventory invent = null;
-		public byte Ip { get => localip; }
+
 		public override LogistNetBlock ParentLogist { get => privateLogist; set => privateLogist = value; }
 		public List<InterFace> InterFaces { get; } = new();
 
-		/// <summary>
-		/// 获取IP
-		/// </summary>
-		/// <returns></returns>
-		public string GetIP()
-		{
-			if (privateLogist == null)
-				return localip.ToString();
-			else
-				return $"{privateLogist.ParentNet.manager.GetIP()}.{localip}";
-		}
-
-		/// <summary>
-		/// 设置ip 为物流网络分配ip设置的接口，请勿调用！
-		/// </summary>
-		/// <returns></returns>
-		public void SetIP(byte i)
-		{
-			localip = i;
-		}
-
-		public override void DestroyBlock()
-		{
-			privateLogist.ParentNet.DelIp(this);
-			base.DestroyBlock();
-		}
 	}
 
 	public class Formula
@@ -170,7 +143,8 @@ namespace GameBase
 	/// </summary>
 	public class LogistNet
 	{
-		public BaseBuild manager { get { return builds[0]; } }
+		private InterFace manager;
+		public InterFace Manager { get => manager; }
 		private int maxIpNum = 8;
 		private int count = 1;
 		static private readonly int selfNetNum = 8;
@@ -180,21 +154,21 @@ namespace GameBase
 		public int Count { get => count; }
 		public int MaxIpNum { get => maxIpNum; }
 
-		private readonly BaseBuild[] builds = new BaseBuild[256];
+		private readonly InterFace[] builds = new InterFace[256];
 
 		public LogistNet()
 		{
 			id = nowid;
 			nowid++;
 		}
-		public bool SetManager(BaseBuild manager)
+		public bool SetManager(InterFace mng)
 		{
-			if (manager == null)
+			if (mng == null)
 			{
 				maxIpNum = 0;
 				return false;
 			}
-			if (manager is LogistCentral logist)
+			if (mng.build is LogistCentral logist)
 			{
 				maxIpNum = logist.MaxIPNum();
 				if (maxIpNum > 256) maxIpNum = 256;
@@ -204,12 +178,11 @@ namespace GameBase
 				maxIpNum = selfNetNum;
 			}
 
-			builds[0] = manager;
-			manager.SetIP(0);
-			manager.ParentLogist.ParentNet = this;
+			manager = mng;
+			mng.SetIP(0);
 			return true;
 		}
-		public bool SetIp(BaseBuild block)
+		public bool SetIp(InterFace block)
 		{
 			int min = -1;
 			for (int i = 1; i < maxIpNum; ++i)
@@ -224,11 +197,10 @@ namespace GameBase
 
 			builds[min] = block;
 			block.SetIP((byte)min);
-			block.ParentLogist.ParentNet = this;
 			count += 1;
 			return true;
 		}
-		public bool DelIp(BaseBuild block)
+		public bool DelIp(InterFace block)
 		{
 			int ip = block.Ip;
 			if (builds[ip] == block)
@@ -250,6 +222,7 @@ namespace GameBase
 				{
 					Blocks.Add(i);
 					i.ParentNet = this;
+					this.SetIp(i.Inter);
 				}
 			}
 			net.Blocks.Clear();
@@ -275,7 +248,7 @@ namespace GameBase
 		readonly List<LogistPipe> pipes = new();
 		public LogistNet ParentNet { get; set; } = new();
 		public int Count { get => pipes.Count; }
-		public BaseBuild Build { get; set; } = null;
+		public InterFace Inter { get; set; } = null;
 		public LogistNetBlock()
 		{
 			id = nowid;
@@ -296,6 +269,10 @@ namespace GameBase
 		{
 			if (netblock.pipes.Count == 0) return;
 			if (netblock == this) return;
+			if (netblock.Inter != null && this.Inter != null && this.ParentNet != null)
+			{
+				if (!ParentNet.SetIp(netblock.Inter)) throw new System.Exception("out of size!");
+			}
 			foreach (var i in netblock.pipes)
 			{
 				pipes.Add(i);

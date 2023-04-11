@@ -37,11 +37,17 @@ namespace Logist
 					temp_rout = inter_rout;
 					temp_dir = inter_dir;
 				}
-			debug = "Router = " + (router == null ? "null" : "router") +
-				"," + (parentLogist == null ? "nullnet" :
-				" LogistNetBlock = " + (parentLogist.Build == null ? "null" : parentLogist.Build.name)
-				+ ":" + parentLogist.id) + "\n" +
-				" LogistNet = " + (parentLogist.ParentNet == null ? "null" : "Net id:" + parentLogist.ParentNet.id);
+			debug = $"Router = {(router == null ? "null" : "router")},"
+				 + (parentLogist == null ? "nullnet" :
+				  $" LogistNetBlock = {(parentLogist.Inter == null ? "null" : parentLogist.Inter.name)} : {parentLogist.id}")
+				 + $" LogistNet = {(parentLogist.ParentNet == null ? "null" : "Net id:" + parentLogist.ParentNet.id)}\n";
+
+
+			if (router != null)
+			{
+				debug += $"router {parentLogist.ParentNet.MaxIpNum}:\n";
+				for (byte i = 0; i < parentLogist.ParentNet.MaxIpNum; ++i) debug += $"dir: {router.Dir(i)},len: {router.Len(i)}\n";
+			}
 		}
 
 		public void setRelayRoute(ushort[] rout, Dircation dir)
@@ -145,11 +151,16 @@ namespace Logist
 			{
 				//if (parentLogist == null) parentLogist = new LogistNetBlcok();
 				//处理物流网络信息
-				SetParentLogist();
+				UpdateParentLogist();
 			}
 		}
-		public void SetParentLogist()
+
+		///<summary>
+		///更新物流网络信息
+		///</summary>
+		public void UpdateParentLogist()
 		{
+			//遍历四个方向
 			int[] counts = new int[4];
 			for (int i = 0; i < 4; ++i)
 			{
@@ -160,6 +171,7 @@ namespace Logist
 					counts[i] = 0;
 			}
 
+			//寻找较小的网络块
 			int min = 0;
 			int minnum = -1;
 			for (int i = 0; i < 4; ++i)
@@ -171,11 +183,16 @@ namespace Logist
 				}
 			}
 
+			//接入，如果四周没有则创建
 			if (minnum == -1) this.parentLogist = new();
 			else if (findbuilding[min] is InterFace inter)
 			{
 				this.parentLogist = new();
-				parentLogist.Build = inter.build;
+				parentLogist.Inter = inter;
+				if (inter.build is LogistCentral)
+				{
+					parentLogist.ParentNet.SetManager(inter);
+				}
 			}
 			else
 			{
@@ -183,13 +200,15 @@ namespace Logist
 			}
 			parentLogist.Add(this);
 
-			if (parentLogist.Build == null)
+			//合并空网络块
+			if (parentLogist.Inter == null)
 			{
+				//查找较小的空网络块
 				for (int i = 0; i < 4; ++i)
 				{
 					if (findbuilding[i] == null) counts[i] = -2;
 					else if (findbuilding[i] is LogistPipe pipe)
-						counts[i] = (pipe.ParentLogist.Build == null ? -1 : pipe.ParentLogist.Count);
+						counts[i] = (pipe.ParentLogist.Inter == null ? -1 : pipe.ParentLogist.Count);
 					else if (findbuilding[i] is InterFace)
 						counts[i] = 0;
 				}
@@ -203,37 +222,49 @@ namespace Logist
 						minnum2 = counts[i];
 					}
 				}
+				//合并
 				if (minnum2 != -2)
 				{
 					findbuilding[min2].ParentLogist.Marge(this.ParentLogist);
-					GC.Collect();
 				}
 			}
-			else
+
+
+			//查找周围的网络块，合并网络块和物流网络
+			for (int i = 0; i < 4; ++i)
 			{
-				for (int i = 0; i < 4; ++i)
+				if (findbuilding[i] is LogistPipe pipe)
 				{
-					if (findbuilding[i] is LogistPipe pipe)
-					{
-						if (pipe.ParentLogist.Build == null)
-							ParentLogist.Marge(pipe.ParentLogist);
-						else if (ParentLogist.ParentNet != pipe.ParentLogist.ParentNet
-							&& LogistNet.BuildSum(ParentLogist.ParentNet, pipe.ParentLogist.ParentNet)
+					if (pipe.ParentLogist.Inter == null)
+						ParentLogist.Marge(pipe.ParentLogist);
+					else
+					//合并两非空物流网络
+					//周围网络非空，非相同物流网络，合并后网络不会过大，网络管理器不会出现冲突
+					//其实应该写成LogistNet的静态，但是QAQ
+					if ((ParentLogist.ParentNet != pipe.ParentLogist.ParentNet)
+						&& LogistNet.BuildSum(ParentLogist.ParentNet, pipe.ParentLogist.ParentNet)
 							<= Math.Max(ParentLogist.ParentNet.MaxIpNum, pipe.ParentLogist.ParentNet.MaxIpNum)
-							&& !(ParentLogist.ParentNet.manager is LogistCentral && pipe.ParentLogist.ParentNet.manager is LogistCentral))
-						{
-							bool choose = ParentLogist.ParentNet.MaxIpNum >= pipe.ParentLogist.ParentNet.MaxIpNum;
-							if (choose)
-								ParentLogist.ParentNet.Marge(pipe.ParentLogist.ParentNet);
-							else
-								pipe.ParentLogist.ParentNet.Marge(ParentLogist.ParentNet);
+						&& !((ParentLogist.ParentNet.Manager is not null && ParentLogist.ParentNet.Manager.build is LogistCentral)
+							&& (pipe.ParentLogist.ParentNet.Manager is not null && pipe.ParentLogist.ParentNet.Manager.build is LogistCentral)))
 
-							GC.Collect();
-						}
-
+					{
+						if (ParentLogist.ParentNet.MaxIpNum > pipe.ParentLogist.ParentNet.MaxIpNum)
+							ParentLogist.ParentNet.Marge(pipe.ParentLogist.ParentNet);
+						else
+							pipe.ParentLogist.ParentNet.Marge(ParentLogist.ParentNet);
 					}
 				}
 			}
+
+			//释放合并所产生的垃圾空间
+			GC.Collect();
+			return;
+		}
+
+		public void SendRout()
+		{
+
+			//setRelayRoute();
 		}
 
 		public static KeyValuePair<Sprite, float> GetImageAndAngles(Vector3 position)

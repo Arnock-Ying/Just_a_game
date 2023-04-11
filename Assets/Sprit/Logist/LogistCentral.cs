@@ -22,10 +22,7 @@ namespace Logist
 			spriteRenderer = GetComponent<SpriteRenderer>();
 		}
 
-		void Update()
-		{
 
-		}
 
 	}
 }

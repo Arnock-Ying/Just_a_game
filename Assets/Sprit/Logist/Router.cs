@@ -16,13 +16,19 @@ namespace Logist
 		private ushort[] vs = new ushort[256];
 		public readonly LogistPipe pipe;
 
-		public ushort[] IpTable { get { return (ushort[])vs.Clone(); } }
+		public ushort[] CopyIpTable()
+		{
+			ushort[] uvs = (ushort[])vs.Clone();
+			for (int i = 0; i < 256; ++i)
+				if (uvs[i] != 0) uvs[i] += 4;
+			return uvs;
+		}
 
-		private int Len(byte ip)
+		public int Len(byte ip)
 		{
 			return vs[ip] >> 2;
 		}
-		private Dircation Dir(byte ip)
+		public Dircation Dir(byte ip)
 		{
 			return (Dircation)(vs[ip] & 3);
 		}
@@ -51,31 +57,53 @@ namespace Logist
 
 		public bool ChangeRoute(ushort[] ipTable, Dircation _dir)
 		{
-
+			Debug.Log($"{pipe.transform.position },{_dir}\n" + ToString(ipTable));
 			bool change = false;
 			int dir = (int)_dir ^ 1;
 			for (int i = 0; i < 256; ++i)
 			{
-				if (ipTable[i] == 0)
+				//if (ipTable[i] == 0 && vs[i] != 0)
+				//{
+				//	if ((vs[i] & 3) == dir)
+				//		vs[i] = 0;
+				//	else
+				//		change = true;
+				//}
+				if ((((ipTable[i] >> 2) < (vs[i] >> 2)) || (vs[i] >> 2) == 0) && (ipTable[i] >> 2) != 0)
 				{
-					if ((vs[i] ^ dir) == 0)
-						vs[i] = 0;
-					else
-						change = true;
-				}
-				if (((ipTable[i] + 4) | 3) < (vs[i] | 3))
-				{
-					vs[i] = (ushort)(ipTable[i] + 4);
+					vs[i] = (ushort)(((ipTable[i] >> 2) << 2) | dir);
+					Debug.Log($"pi:{i},dir:{Dir((byte)i)},len:{Len((byte)i)}");
 				}
 			}
 			return change;
 		}
 
+		public void Clear()
+		{
+			for (int i = 0; i < 256; ++i)
+				vs[i] = 0;
+		}
 		public static ushort[] MakeTable(byte ip, Dircation dir, int len = 1)
 		{
 			ushort[] vs = new ushort[256];
 			vs[ip] = (ushort)((len << 2) | ((byte)dir & 3));
 			return vs;
+		}
+
+		public override string ToString()
+		{
+			string str = "";
+			for (byte i = 0; i < 8; ++i)
+				str += $"ip: {i}, dir: {Dir(i)}, len: {Len(i)}\n";
+			return str;
+		}
+
+		public static string ToString(ushort[] vs)
+		{
+			string str = "";
+			for (byte i = 0; i < 8; ++i)
+				str += $"ip: {i}, dir: {(Dircation)(vs[i] & 3)}, len: {vs[i] >> 2}\n";
+			return str;
 		}
 	}
 }

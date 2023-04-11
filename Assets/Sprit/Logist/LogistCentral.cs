@@ -9,7 +9,7 @@ namespace Logist
 {
 	public class LogistCentral : BaseBuild
 	{
-		private LogistNet managedlogist;
+		private LogistNetBlock managedlogist;
 		private SpriteRenderer spriteRenderer;
 		[SerializeField]
 		private int maxIpNum = 32;
@@ -22,10 +22,7 @@ namespace Logist
 			spriteRenderer = GetComponent<SpriteRenderer>();
 		}
 
-		void Update()
-		{
 
-		}
 
 	}
 }

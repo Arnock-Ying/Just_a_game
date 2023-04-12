@@ -66,19 +66,22 @@ namespace Logist
 							Debug.Log(transform.position + "pipe with null nouter to" + (Dircation)i);
 							pipe.setRelayRoute(rout, (Dircation)(i));
 						}
+						else if (findbuilding[i] is InterFace inter) inter.UpdateIp(rout);
 					}
 			}
 			else
 			{
-				bool back = router.ChangeRoute(rout, dir);
+				var back = router.ChangeRoute(rout, dir);
 				for (int i = 0; i < 4; ++i)
-					if (((int)dir != (i ^ 1)) && findbuilding[i] != null)
+					if (back.Key && ((int)dir != (i ^ 1)) && findbuilding[i] != null)
 					{
 						if (findbuilding[i] is LogistPipe pipe) pipe.setRelayRoute(router.CopyIpTable(), (Dircation)(i));
+						else if (findbuilding[i] is InterFace inter) inter.UpdateIp(router.CopyIpTable());
 					}
-					else if (back && findbuilding[i] != null)
+					else if (back.Value && findbuilding[i] != null)
 					{
 						if (findbuilding[i] is LogistPipe pipe) pipe.setRelayRoute(router.CopyIpTable(), (Dircation)(i));
+						else if (findbuilding[i] is InterFace inter) inter.UpdateIp(router.CopyIpTable());
 					}
 				GC.Collect();//手动让垃圾回收器释放一下
 			}

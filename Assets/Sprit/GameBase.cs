@@ -100,14 +100,6 @@ namespace GameBase
 	}
 
 	///<summary>
-	///物流管道
-	/// </summary>
-	//public class LogistPipe : Block
-	//{
-
-	//}
-
-	///<summary>
 	///能量管道
 	///</summary>
 	public class EnergyPipe : Block
@@ -136,6 +128,79 @@ namespace GameBase
 	{
 		public string id;
 		public int count;
+
+		public Item() { }
+		public Item(string i, int c)
+		{
+			id = i; count = c;
+		}
+
+	}
+
+	/// <summary>
+	/// 请求队列
+	/// </summary>
+	public class AskQueue
+	{
+		static readonly int maxPriority = 10;
+		Dictionary<string, Queue<KeyValuePair<byte, int>>[]> queues = new();
+		Dictionary<string, KeyValuePair<byte, int>?> tops = new();
+
+		public bool Push(int ip, Item item, int high = 0)
+		{
+			return Push(ip, item.id, item.count, high);
+		}
+		public bool Push(int ip, string id, int num, int high = 0)
+		{
+			if (ip >= 256 || ip < 0) return false;
+			if (num < 0) return false;
+			if (high >= maxPriority || high < 0) return false;
+			if (!queues.ContainsKey(id))
+			{
+				queues.Add(id, new Queue<KeyValuePair<byte, int>>[maxPriority]);
+				tops.Add(id, null);
+				for (int i = 0; i < maxPriority; ++i)
+				{
+					queues[id][i] = new();
+				}
+			}
+			queues[id][high].Enqueue(new((byte)ip, num));
+			return true;
+		}
+
+		private bool UpdateTop(string id)
+		{
+			for (int i = maxPriority - 1; i >= 0; --i)
+			{
+				if (queues[id][i].Count != 0)
+				{
+					tops[id] = queues[id][i].Dequeue();
+					return true;
+				}
+			}
+			return false;
+		}
+		public KeyValuePair<byte, int>? Answer(string id, int maxPackage = 1)
+		{
+			if (!queues.ContainsKey(id)) return null;
+			if (tops[id] == null)
+				if (!UpdateTop(id)) return null;
+
+			KeyValuePair<byte, int>? ans = null;
+			if (tops[id].Value.Value > maxPackage)
+			{
+				ans = new(tops[id].Value.Key, maxPackage);
+				tops[id] = new(tops[id].Value.Key, tops[id].Value.Value - maxPackage);
+			}
+			else
+			{
+				ans = tops[id];
+				tops[id] = null;
+				UpdateTop(id);
+			}
+
+			return ans;
+		}
 	}
 
 	/// <summary>
@@ -151,10 +216,11 @@ namespace GameBase
 		public readonly int id;
 		static int nowid = 0;
 		public List<LogistNetBlock> Blocks { get; } = new();
+		public AskQueue AskQueue { get; } = new();
 		public int Count { get => count; }
 		public int MaxIpNum { get => maxIpNum; }
 
-		private readonly InterFace[] builds = new InterFace[256];
+		private readonly LogistNetBlock[] builds = new LogistNetBlock[256];
 
 		public LogistNet()
 		{
@@ -182,7 +248,7 @@ namespace GameBase
 			mng.SetIP(0);
 			return true;
 		}
-		public bool SetIp(InterFace block)
+		public bool SetIp(LogistNetBlock block)
 		{
 			int min = -1;
 			for (int i = 1; i < maxIpNum; ++i)
@@ -194,19 +260,19 @@ namespace GameBase
 			}
 
 			if (min == -1) return false;
+			if (block.Inter == null) return false;
 
 			builds[min] = block;
-			block.SetIP((byte)min);
+			block.Inter.SetIP((byte)min);
 			count += 1;
 			return true;
 		}
-		public bool DelIp(InterFace block)
+		public bool DelIp(LogistNetBlock block)
 		{
-			int ip = block.Ip;
+			int ip = block.Inter.Ip;
 			if (builds[ip] == block)
 			{
 				builds[ip] = null;
-				block.ParentLogist = null;
 				--count;
 				return true;
 			}
@@ -216,21 +282,53 @@ namespace GameBase
 		public void Marge(LogistNet net)
 		{
 			if (net == this) return;
+			//for (int i = 0; i < net.maxIpNum; ++i)
+			//{
+			//	if (net.builds[i] != null)
+			//	{
+					//bool flg = true;
+					//for (int j = 0; j < maxIpNum; ++j)
+					//{
+					//	if (net.builds[i] == builds[i])
+					//	{
+					//		flg = false;
+					//		break;
+					//	}
+					//}
+
+			//		if (SetIp(net.builds[i]))
+			//		{
+			//			net.builds[i].ParentNet = this;
+			//		}
+			//	}
+			//}
 			foreach (var i in net.Blocks)
 			{
 				if (!Blocks.Contains(i))
 				{
 					Blocks.Add(i);
 					i.ParentNet = this;
-					this.SetIp(i.Inter);
+					this.SetIp(i);
 				}
 			}
 			net.Blocks.Clear();
-			foreach (var i in Blocks)
+			foreach(var i in Blocks)
 			{
-				i.Inter.SendRouter();
+				if (i.Inter != null) i.Inter.SendRouter();
 			}
+			//for (int i = 0; i < maxIpNum; ++i)
+			//{
+			//	if (builds[i] != null)
+			//		builds[i].Inter.SendRouter();
+			//}
 		}
+
+		public InterFace GetInterFace(int ip)
+		{
+			if (ip > 255 || ip < 0) return null;
+			return builds[ip].Inter;
+		}
+
 		public static int BuildSum(LogistNet net1, LogistNet net2)
 		{
 			int sum = net1.count + net2.count - 1;
@@ -275,7 +373,7 @@ namespace GameBase
 			if (netblock == this) return;
 			if (netblock.Inter != null && this.Inter != null && this.ParentNet != null)
 			{
-				if (!ParentNet.SetIp(netblock.Inter)) throw new System.Exception("out of size!");
+				if (!ParentNet.SetIp(netblock)) throw new System.Exception("out of size!");
 			}
 			foreach (var i in netblock.pipes)
 			{

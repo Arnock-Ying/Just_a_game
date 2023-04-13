@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Threading;
 
 using Logist;
 using Manager;
@@ -72,8 +73,18 @@ namespace GameBase
 		protected EnergyNet privateEngrgy;
 		protected Inventory invent = null;
 
+		public Inventory Invent { get => invent; }
 		public override LogistNetBlock ParentLogist { get => privateLogist; set => privateLogist = value; }
 		public List<InterFace> InterFaces { get; } = new();
+		public virtual int Contains(string id)
+		{
+			return invent.Contains(id);
+		}
+
+		public virtual Item PopItem(string id, int count)
+		{
+			return invent.Output(id, count);
+		}
 
 	}
 
@@ -145,12 +156,13 @@ namespace GameBase
 		static readonly int maxPriority = 10;
 		Dictionary<string, Queue<KeyValuePair<byte, int>>[]> queues = new();
 		Dictionary<string, KeyValuePair<byte, int>?> tops = new();
+		public Dictionary<string, KeyValuePair<byte, int>?> Tops { get => tops; }
 
 		public bool Push(int ip, Item item, int high = 0)
 		{
 			return Push(ip, item.id, item.count, high);
 		}
-		public bool Push(int ip, string id, int num, int high = 0)
+		private bool Push(int ip, string id, int num, int high = 0)
 		{
 			if (ip >= 256 || ip < 0) return false;
 			if (num < 0) return false;
@@ -215,6 +227,9 @@ namespace GameBase
 		static private readonly int selfNetNum = 8;
 		public readonly int id;
 		static int nowid = 0;
+
+		private bool alive = false;
+		private Thread thread;
 		public List<LogistNetBlock> Blocks { get; } = new();
 		public AskQueue AskQueue { get; } = new();
 		public int Count { get => count; }
@@ -226,7 +241,44 @@ namespace GameBase
 		{
 			id = nowid;
 			nowid++;
+
+			//创建请求应答线程
+			thread = new(RotateAnswer);
+			thread.Start();
+
 		}
+
+		~LogistNet()
+		{
+			alive = false;
+		}
+		public void RotateAnswer()
+		{
+			while (true)
+			{
+				//土方法锁线程，待优化
+				if (alive)
+				{
+					foreach (var i in AskQueue.Tops)
+					{
+						if (i.Value != null)
+							foreach (var j in Blocks)
+							{
+								if (!alive) break;
+								if (j.Inter != null) j.Inter.AnswerLogist(i.Key);
+							}
+					}
+				}
+			}
+		}
+
+		public void PushAskQueue(int ip, Item item, int high = 0)
+		{
+			alive = false;
+			AskQueue.Push(ip, item, high);
+			alive = true;
+		}
+
 		public bool SetManager(InterFace mng)
 		{
 			if (mng == null)
@@ -234,7 +286,7 @@ namespace GameBase
 				maxIpNum = 0;
 				return false;
 			}
-			if (mng.build is LogistCentral logist)
+			if (mng.Build is LogistCentral logist)
 			{
 				maxIpNum = logist.MaxIPNum();
 				if (maxIpNum > 256) maxIpNum = 256;
@@ -286,15 +338,15 @@ namespace GameBase
 			//{
 			//	if (net.builds[i] != null)
 			//	{
-					//bool flg = true;
-					//for (int j = 0; j < maxIpNum; ++j)
-					//{
-					//	if (net.builds[i] == builds[i])
-					//	{
-					//		flg = false;
-					//		break;
-					//	}
-					//}
+			//bool flg = true;
+			//for (int j = 0; j < maxIpNum; ++j)
+			//{
+			//	if (net.builds[i] == builds[i])
+			//	{
+			//		flg = false;
+			//		break;
+			//	}
+			//}
 
 			//		if (SetIp(net.builds[i]))
 			//		{
@@ -312,7 +364,7 @@ namespace GameBase
 				}
 			}
 			net.Blocks.Clear();
-			foreach(var i in Blocks)
+			foreach (var i in Blocks)
 			{
 				if (i.Inter != null) i.Inter.SendRouter();
 			}
@@ -415,6 +467,13 @@ namespace GameBase
 			maxCount = size;
 			items = new();
 		}
+		public int Contains(string s)
+		{
+			if (items.ContainsKey(s))
+				return items[s];
+			else
+				return -1;
+		}
 		public bool Input(string id, int number)
 		{
 			if (maxCount == 0) return false;
@@ -432,9 +491,9 @@ namespace GameBase
 			}
 			return true;
 		}
-		public bool Output(string id, int number)
+		public Item Output(string id, int number)
 		{
-			if (maxCount == 0) return false;
+			if (maxCount == 0) return null;
 			if (items.ContainsKey(id))
 			{
 				if (items[id] > number)
@@ -448,11 +507,11 @@ namespace GameBase
 						count -= number;
 				}
 				else
-					return false;
+					return null;
 			}
 			else
-				return false;
-			return true;
+				return null;
+			return new Item(id, number);
 		}
 
 		public int Get(string id)

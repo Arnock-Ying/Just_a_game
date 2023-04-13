@@ -4,7 +4,7 @@ using UnityEngine;
 using GameBase;
 using Logist;
 
-namespace Assets.Sprit.Logist
+namespace Logist
 {
 	public class TrafficItems : MonoBehaviour
 	{

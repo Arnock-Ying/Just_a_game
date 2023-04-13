@@ -1,17 +1,22 @@
 ﻿using System.Collections;
 using UnityEngine;
 using GameBase;
+using System.Collections.Generic;
 
 namespace Logist
 {
 	public class InterFace : Block
 	{
-		public BaseBuild build;
+		private BaseBuild build;
+		public BaseBuild Build { get => build; set { build = value; invent = build.Invent; } }
 		public LogistPipe pipe;
 		public Dircation dir;
 		[SerializeField]
 		protected byte localip;
 		private Router router = new(null);
+		private Inventory invent = null;
+		private KeyValuePair<byte, int>? answer = null;
+		private string answerid;
 		public Router Router { get => router; }
 		public byte Ip { get => localip; }
 		private LogistNetBlock parentLogist = null;
@@ -41,7 +46,10 @@ namespace Logist
 		private void FixedUpdate()
 		{
 			debug = router.ToString();
-			AnswerLogist();
+			if (answer != null)
+			{
+				SendPeakage();
+			}
 		}
 
 
@@ -61,20 +69,45 @@ namespace Logist
 
 		public void AskLogist(Item item, int high = 0)//由建筑主动拉起请求发送
 		{
-			ParentLogist.ParentNet.AskQueue.Push(localip, item, high);
+			ParentLogist.ParentNet.PushAskQueue(localip, item, high);
 		}
 
-		public void AnswerLogist()
+		public bool AnswerLogist(string id, int maxPackage = 1)
 		{
-			//todo-> 对多线程的优化
-			
-			//todo-> 查找建筑内库存，
+			//对多线程的优化
+
+			//查找建筑内库存，
 			//获取库存对应的网络内请求
 			//没有=>return
+			//有=>物品封装发包
+			if (answer != null) return false;
+			int have_number = invent.Contains(id);
+			if (have_number <= 0) return false;
+			if (have_number < maxPackage) maxPackage = have_number;
 
-			//todo-> 物品封装发包
+			answer = parentLogist.ParentNet.AskQueue.Answer(id, maxPackage);
+			answerid = id;
+			if (answer == null) return false;
+			return true;
 		}
 
+		private void SendPeakage()
+		{
+			if (answer == null) return;
+
+			//物品封装发包
+			Item item = build.PopItem(answerid, answer.Value.Value);
+			GameObject obj = new GameObject();
+			obj.AddComponent<TrafficItems>().Init(item, answer.Value.Key, this);
+			this.ParentLogist.ParentNet.GetInterFace(answer.Value.Key).GetReanswer(item);
+			answer = null;
+			return;
+		}
+
+		public virtual void GetReanswer(Item item)
+		{
+			//todo->接受响应并通知建筑
+		}
 
 		public override void DestroyBlock()
 		{
@@ -82,7 +115,6 @@ namespace Logist
 				if (parentLogist.ParentNet != null)
 				{
 					parentLogist.ParentNet.DelIp(this.ParentLogist);
-					//todo--销毁网络块
 				}
 			build.InterFaces.Remove(this);
 			Destroy(this.gameObject);

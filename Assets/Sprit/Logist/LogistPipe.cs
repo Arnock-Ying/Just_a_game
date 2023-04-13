@@ -36,7 +36,7 @@ namespace Logist
 				inter_rout[i] = null;
 			}
 			debug = (parentLogist == null ? "nullnet" :
-				  $" LogistNetBlock = {(parentLogist.Inter == null ? "null" : parentLogist.Inter.build.name)} : {parentLogist.id}")
+				  $" LogistNetBlock = {(parentLogist.Inter == null ? "null" : parentLogist.Inter.Build.name)} : {parentLogist.id}")
 				 + $" LogistNet = {(parentLogist.ParentNet == null ? "null" : "Net id:" + parentLogist.ParentNet.id)}\n";
 
 			if (router != null)
@@ -103,12 +103,12 @@ namespace Logist
 					if (block is BaseBuild build)
 					{
 						con_num++;
-						if (findbuilding[i] is not InterFace nowinter || nowinter.build != build)
+						if (findbuilding[i] is not InterFace nowinter || nowinter.Build != build)
 						{
 							InterFace inter = Instantiate(Resources.Load<GameObject>("Pipe/InterFace")).GetComponent<InterFace>();
 							inter.gameObject.transform.position = new Vector3(transform.position.x + step[i] * 0.5f, transform.position.y + step[i + 4] * 0.5f, -1.5f);
 							build.InterFaces.Add(inter);
-							inter.build = build;
+							inter.Build = build;
 							inter.pipe = this;
 							inter.dir = (Dircation)(i ^ 1);
 							findbuilding[i] = inter;
@@ -194,7 +194,7 @@ namespace Logist
 			{
 				this.parentLogist = new();
 				parentLogist.Inter = inter;
-				if (inter.build is LogistCentral)
+				if (inter.Build is LogistCentral)
 				{
 					parentLogist.ParentNet.SetManager(inter);
 				}
@@ -249,8 +249,8 @@ namespace Logist
 					if ((ParentLogist.ParentNet != pipe.ParentLogist.ParentNet)
 						&& LogistNet.BuildSum(ParentLogist.ParentNet, pipe.ParentLogist.ParentNet)
 							<= Math.Max(ParentLogist.ParentNet.MaxIpNum, pipe.ParentLogist.ParentNet.MaxIpNum)
-						&& !((ParentLogist.ParentNet.Manager is not null && ParentLogist.ParentNet.Manager.build is LogistCentral)
-							&& (pipe.ParentLogist.ParentNet.Manager is not null && pipe.ParentLogist.ParentNet.Manager.build is LogistCentral)))
+						&& !((ParentLogist.ParentNet.Manager is not null && ParentLogist.ParentNet.Manager.Build is LogistCentral)
+							&& (pipe.ParentLogist.ParentNet.Manager is not null && pipe.ParentLogist.ParentNet.Manager.Build is LogistCentral)))
 
 					{
 						if (ParentLogist.ParentNet.MaxIpNum > pipe.ParentLogist.ParentNet.MaxIpNum)

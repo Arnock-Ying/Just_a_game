@@ -9,6 +9,7 @@ public class Smelter : ProductionBuilding
     void Start()
     {
         MapManager.SetBuild(transform.position, size, this);
+        base.Start();
     }
 
     void Update()

@@ -8,8 +8,9 @@ using Manager;
 
 namespace GameBase
 {
+
 	///<summary>
-	///·½¿éÀà
+	///æ–¹å—ç±»
 	///</summary>
 	public class Block : MonoBehaviour
 	{
@@ -62,7 +63,7 @@ namespace GameBase
 	}
 
 	/// <summary>
-	/// ½¨Öş»ùÀà
+	/// å»ºç­‘åŸºç±»
 	/// </summary>
 	public class BaseBuild : Block
 	{
@@ -94,8 +95,8 @@ namespace GameBase
 		public List<Item> Material { get { return material; } }
 		List<Item> product = new();
 		public List<Item> Product { get { return product; } }
-		public float production_time = 1;//Éú²úĞèÒªµÄÊ±¼ä
-		public bool isenable = false;   //ÊÇ·ñÆôÓÃ¸ÃÅä·½
+		public float production_time = 1;//ç”Ÿäº§éœ€è¦çš„æ—¶é—´
+		public bool isenable = false;   //æ˜¯å¦å¯ç”¨è¯¥é…æ–¹
 		Formula() { }
 		Formula(List<Item> mat, List<Item> pro = null)
 		{
@@ -104,14 +105,23 @@ namespace GameBase
 		}
 	}
 
-	public class ProductionBuilding : BaseBuild
-	{
-		protected Formula formula;
-		protected float efficiency = 1;
-	}
+    public class ProductionBuilding : BaseBuild
+    {
+        protected Formula formula = null;
+        protected float efficiency = 1;
+
+        protected void Start()
+        {
+            Item wood = new("wood", 1);
+            List<Item> temp = new();
+            temp.Add(wood);
+            formula = new(temp);
+
+        }
+    }
 
 	///<summary>
-	///ÄÜÁ¿¹ÜµÀ
+	///èƒ½é‡ç®¡é“
 	///</summary>
 	public class EnergyPipe : Block
 	{
@@ -119,7 +129,7 @@ namespace GameBase
 	}
 
 	///<summary>
-	///ÉúÎï
+	///ç”Ÿç‰©
 	///</summary>
 	public class Biont : MonoBehaviour
 	{
@@ -133,7 +143,7 @@ namespace GameBase
 	}
 
 	/// <summary>
-	/// ÎïÆ·Àà
+	/// ç‰©å“ç±»
 	/// </summary>
 	public class Item
 	{
@@ -149,7 +159,7 @@ namespace GameBase
 	}
 
 	/// <summary>
-	/// ÇëÇó¶ÓÁĞ
+	/// è¯·æ±‚é˜Ÿåˆ—
 	/// </summary>
 	public class AskQueue
 	{
@@ -216,7 +226,7 @@ namespace GameBase
 	}
 
 	/// <summary>
-	/// ÎïÁ÷ÍøÂç
+	/// ç‰©æµç½‘ç»œ
 	/// </summary>
 	public class LogistNet
 	{
@@ -242,7 +252,7 @@ namespace GameBase
 			id = nowid;
 			nowid++;
 
-			//´´½¨ÇëÇóÓ¦´ğÏß³Ì
+			//åˆ›å»ºè¯·æ±‚åº”ç­”çº¿ç¨‹
 			thread = new(RotateAnswer);
 			thread.Start();
 
@@ -256,7 +266,7 @@ namespace GameBase
 		{
 			while (true)
 			{
-				//ÍÁ·½·¨ËøÏß³Ì£¬´ıÓÅ»¯
+				//åœŸæ–¹æ³•é”çº¿ç¨‹ï¼Œå¾…ä¼˜åŒ–
 				if (alive)
 				{
 					foreach (var i in AskQueue.Tops)
@@ -437,7 +447,7 @@ namespace GameBase
 	}
 
 	/// <summary>
-	/// ÄÜÁ¿ÍøÂç
+	/// èƒ½é‡ç½‘ç»œ
 	/// </summary>
 	public class EnergyNet
 	{
@@ -447,7 +457,7 @@ namespace GameBase
 	}
 
 	/// <summary>
-	/// ¿â´æ
+	/// åº“å­˜
 	/// </summary>
 	public class Inventory
 	{

@@ -17,6 +17,7 @@ namespace Logist
 		private Inventory invent = null;
 		private KeyValuePair<byte, int>? answer = null;
 		private string answerid;
+		private List<Item> asks = new();
 		public Router Router { get => router; }
 		public byte Ip { get => localip; }
 		private LogistNetBlock parentLogist = null;
@@ -69,6 +70,7 @@ namespace Logist
 
 		public void AskLogist(Item item, int high = 0)//由建筑主动拉起请求发送
 		{
+			asks.Add(item);
 			ParentLogist.ParentNet.PushAskQueue(localip, item, high);
 		}
 
@@ -94,19 +96,39 @@ namespace Logist
 		private void SendPeakage()
 		{
 			if (answer == null) return;
-
+			if (!ParentLogist.ParentNet.GetInterFace(answer.Value.Key).GetReanswer(answerid, answer)) return;
 			//物品封装发包
 			Item item = build.PopItem(answerid, answer.Value.Value);
 			GameObject obj = new GameObject();
 			obj.AddComponent<TrafficItems>().Init(item, answer.Value.Key, this);
-			this.ParentLogist.ParentNet.GetInterFace(answer.Value.Key).GetReanswer(item);
+
 			answer = null;
 			return;
 		}
 
-		public virtual void GetReanswer(Item item)
+		public virtual bool GetReanswer(string id, KeyValuePair<byte, int>? answer)
 		{
-			//todo->接受响应并通知建筑
+			//接受响应并通知建筑
+			if (answer == null) return false;
+			if (answer.Value.Key != localip) return false;
+
+			for (int i = 0; i < asks.Count; ++i)
+			{
+				if (asks[i].id == id)
+				{
+					if (asks[i].count > answer.Value.Value)
+					{
+						asks[i].count -= answer.Value.Value;
+						return true;
+					}
+					else if (asks[i].count == answer.Value.Value)
+					{
+						asks.RemoveAt(i);
+						return true;
+					}
+				}
+			}
+			return false;
 		}
 
 		public override void DestroyBlock()

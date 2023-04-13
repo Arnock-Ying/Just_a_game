@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using UnityEngine;
+using System.Collections.Generic;
 
 namespace Logist
 {
@@ -55,27 +56,29 @@ namespace Logist
 			return true;
 		}
 
-		public bool ChangeRoute(ushort[] ipTable, Dircation _dir)
+		public KeyValuePair<bool, bool> ChangeRoute(ushort[] ipTable, Dircation _dir)
 		{
-			Debug.Log($"{pipe.transform.position },{_dir}\n" + ToString(ipTable));
+			Debug.Log($"{(pipe == null ? "interface" : pipe.transform.position)},{_dir}\n" + ToString(ipTable));
 			bool change = false;
+			bool rechange = false;
 			int dir = (int)_dir ^ 1;
 			for (int i = 0; i < 256; ++i)
 			{
-				//if (ipTable[i] == 0 && vs[i] != 0)
-				//{
-				//	if ((vs[i] & 3) == dir)
-				//		vs[i] = 0;
-				//	else
-				//		change = true;
-				//}
+				if (ipTable[i] == (ushort)0xFFFF && vs[i] != 0)
+				{
+					if ((vs[i] & 3) == dir)
+						vs[i] = 0;
+					else
+						rechange = true;
+				}
 				if ((((ipTable[i] >> 2) < (vs[i] >> 2)) || (vs[i] >> 2) == 0) && (ipTable[i] >> 2) != 0)
 				{
 					vs[i] = (ushort)(((ipTable[i] >> 2) << 2) | dir);
 					Debug.Log($"pi:{i},dir:{Dir((byte)i)},len:{Len((byte)i)}");
+					change = true;
 				}
 			}
-			return change;
+			return new(change, rechange);
 		}
 
 		public void Clear()

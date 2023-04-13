@@ -456,6 +456,7 @@ namespace GameBase
 
 		private Dictionary<string, int> items;
 
+		public Dictionary<string, int> Items { get => items; }
 		public int Count { get { if (maxCount == 0) return 0; else return count; } }
 		public int MaxCount { get { return maxCount; } }
 		public Inventory()

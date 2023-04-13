@@ -96,6 +96,7 @@ namespace Logist
 		private void SendPeakage()
 		{
 			if (answer == null) return;
+			//握手，握手失败则忽视请求
 			if (!ParentLogist.ParentNet.GetInterFace(answer.Value.Key).GetReanswer(answerid, answer)) return;
 			//物品封装发包
 			Item item = build.PopItem(answerid, answer.Value.Value);

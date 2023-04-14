@@ -14,7 +14,7 @@ public class Smelter : ProductionBuilding
 
     void Update()
     {
-
+        base.Update();
     }
 
     private void FixedUpdate()

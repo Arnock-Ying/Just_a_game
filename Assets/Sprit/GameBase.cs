@@ -125,6 +125,11 @@ namespace GameBase
             formula = new(temp);
 
         }
+
+        protected void Update()
+        {
+            
+        }
     }
 
     ///<summary>

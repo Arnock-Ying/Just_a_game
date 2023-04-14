@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using UnityEngine;
+using System.Collections.Generic;
 
 namespace Manager
 {
@@ -11,13 +12,28 @@ namespace Manager
 
         [SerializeField]
         private Sprite[] pipeImage;
-        public Sprite[] PipeImage { get { return pipeImage; } }
+        [SerializeField]
+        private Sprite[] peakageImage;
+        [SerializeField]
+        private string[] itemNumToId;
+        public static Sprite[] PipeImage { get { return instend.pipeImage; } }
+        public static Sprite PeakageImage(string id)
+        {
+            for (int i = 0; i < instend.itemNumToId.Length; ++i)
+            {
+                if (instend.itemNumToId[i] == id)
+                    return instend.peakageImage[i];
+            }
+            return null;
+        }
         public void Awake()
         {
             if (instend == null)
                 instend = this;
             else
                 Destroy(gameObject);
+
+
         }
     }
 }

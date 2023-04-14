@@ -72,7 +72,7 @@ namespace GameBase
 
         protected LogistNetBlock privateLogist = null;
         protected EnergyNet privateEngrgy;
-        protected Inventory invent = new();
+        protected Inventory invent;
         private List<Item> asks = new();
 
         public Inventory Invent { get => invent; }
@@ -123,7 +123,7 @@ namespace GameBase
         protected void Start()
         {
             maxInvent = 100;
-            invent = new();
+            invent = new(maxInvent);
             Item wood = new("wood", 1);//临时用用
             List<Item> temp = new();
             temp.Add(wood);
@@ -144,9 +144,10 @@ namespace GameBase
                             //传进接口里
                             foreach (InterFace iface in InterFaces)
                             {
-                                iface.AskLogist(new Item(it.id, maxInvent));
+                                if (maxInvent - invent.Contains(it.id) > 0)
+                                    iface.AskLogist(new Item(it.id, maxInvent - invent.Contains(it.id)));
                             }
-                            debug = "请求: " + it.id + " " + maxInvent + "\n内存物品数量: " + invent.Contains(it.id);
+                            debug = "请求: " + it.id + " " + maxInvent + "\n内存物品数量: \n" + invent.GetLog();
                         }
                     }
                     timer = 0;
@@ -258,7 +259,7 @@ namespace GameBase
                 ans = tops[id];
                 tops[id] = null;
                 UpdateTop(id);
-                
+
             }
 
             return ans;
@@ -317,7 +318,7 @@ namespace GameBase
                                 foreach (var j in Blocks)
                                 {
                                     if (!threadPause) break;
-                                    if (j.Inter != null)
+                                    if (j.Inter != null && j.Inter.Ip != i.Value.Value.Key)
                                     {
                                         j.Inter.AnswerLogist(i.Key);
                                     }
@@ -325,11 +326,11 @@ namespace GameBase
                             if (!threadPause) break;
                         }
                     }
-                    catch(System.InvalidOperationException)
+                    catch (System.InvalidOperationException)
                     {
-                        Debug.Log("out");
+                        ;
                     }
-                    
+
 
                 }
             }
@@ -520,26 +521,32 @@ namespace GameBase
         private int maxCount = 0;
         private int count = 0;
 
-        private Dictionary<string, int> items = new();
+        private Dictionary<string, int> items;
 
         public Dictionary<string, int> Items { get => items; }
         public int Count { get { if (maxCount == 0) return 0; else return count; } }
         public int MaxCount { get { return maxCount; } }
-        public Inventory()
-        {
-            maxCount = 0;
-        }
+
         public Inventory(int size)
         {
             maxCount = size;
             items = new();
         }
-        public int Contains(string s)
+        public int Contains(string id)
         {
-            if (items.ContainsKey(s))
-                return items[s];
-            else
+            //if (items == null) Debug.Log("这里怎么能是null呢？这不能啊");
+            //待优化
+            try
+            {
+                if (items.TryGetValue(id, out int ans))
+                    return ans;
+                else
+                    return -1;
+            }
+            catch (System.NullReferenceException)
+            {
                 return -1;
+            }
         }
         public bool Input(string id, int number)
         {

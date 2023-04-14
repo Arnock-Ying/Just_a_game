@@ -139,5 +139,11 @@ namespace Logist
             building.InterFaces.Remove(this);
             Destroy(this.gameObject);
         }
+
+        public void InputItem(Item item)
+        {
+            if (!building.Invent.Input(item.id, item.count))
+                Debug.Log($"Input {item.id} {item.count} Error");
+        }
     }
 }

@@ -21,6 +21,7 @@ namespace Logist
 
         private LogistNetBlock parentLogist = null;
         public override LogistNetBlock ParentLogist { get => parentLogist; set => parentLogist = value; }
+        public Router Router { get => router; }
 
         private void Start()
         {
@@ -287,9 +288,9 @@ namespace Logist
             Sprite sprite;
             //加载con_num对应贴图
             if (con_num == 2 && !(findbuilding[0] ^ findbuilding[1]))
-                sprite = LogistManager.Instend.PipeImage[5];
+                sprite = LogistManager.PipeImage[5];
             else
-                sprite = LogistManager.Instend.PipeImage[con_num];
+                sprite = LogistManager.PipeImage[con_num];
 
             //旋转
             //Debug.Log(cnt + "--(" + und[i] + "," + und[(i + 1) % 4] + ")" + (findbuilding[und[i]] != null) + ":" + (findbuilding[und[(i + 1) % 4]] != null));

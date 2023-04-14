@@ -72,7 +72,7 @@ namespace GameBase
 
         protected LogistNetBlock privateLogist = null;
         protected EnergyNet privateEngrgy;
-        protected Inventory invent = null;
+        protected Inventory invent = new();
         private List<Item> asks = new();
 
         public Inventory Invent { get => invent; }

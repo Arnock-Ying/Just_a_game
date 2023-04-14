@@ -36,7 +36,7 @@ namespace Logist
                 inter_rout[i] = null;
             }
             debug = (parentLogist == null ? "nullnet" :
-                  $" LogistNetBlock = {(parentLogist.Inter == null ? "null" : parentLogist.Inter.Build.name)} : {parentLogist.id}")
+                  $" LogistNetBlock = {(parentLogist.Inter == null ? "null" : parentLogist.Inter.building.name)} : {parentLogist.id}")
                  + $" LogistNet = {(parentLogist.ParentNet == null ? "null" : "Net id:" + parentLogist.ParentNet.id)}\n";
 
             if (router != null)
@@ -100,15 +100,14 @@ namespace Logist
 
                 if (block != null)
                 {
-                    if (block is BaseBuild build)
+                    if (block is BaseBuilding building)
                     {
                         con_num++;
-                        if (findbuilding[i] is not InterFace nowinter || nowinter.Build != build)
+                        if (findbuilding[i] is not InterFace nowinter || nowinter.building != building)
                         {
                             InterFace inter = Instantiate(Resources.Load<GameObject>("Pipe/InterFace")).GetComponent<InterFace>();
                             inter.gameObject.transform.position = new Vector3(transform.position.x + step[i] * 0.5f, transform.position.y + step[i + 4] * 0.5f, -1.5f);
-                            build.InterFaces.Add(inter);
-                            inter.Build = build;
+                            building.AddInterFace(inter);
                             inter.pipe = this;
                             inter.dir = (Dircation)(i ^ 1);
                             findbuilding[i] = inter;
@@ -194,7 +193,7 @@ namespace Logist
             {
                 this.parentLogist = new();
                 parentLogist.Inter = inter;
-                if (inter.Build is LogistCentral)
+                if (inter.building is LogistCentral)
                 {
                     parentLogist.ParentNet.SetManager(inter);
                 }
@@ -249,8 +248,8 @@ namespace Logist
                     if ((ParentLogist.ParentNet != pipe.ParentLogist.ParentNet)
                         && LogistNet.BuildSum(ParentLogist.ParentNet, pipe.ParentLogist.ParentNet)
                             <= Math.Max(ParentLogist.ParentNet.MaxIpNum, pipe.ParentLogist.ParentNet.MaxIpNum)
-                        && !((ParentLogist.ParentNet.Manager is not null && ParentLogist.ParentNet.Manager.Build is LogistCentral)
-                            && (pipe.ParentLogist.ParentNet.Manager is not null && pipe.ParentLogist.ParentNet.Manager.Build is LogistCentral)))
+                        && !((ParentLogist.ParentNet.Manager is not null && ParentLogist.ParentNet.Manager.building is LogistCentral)
+                            && (pipe.ParentLogist.ParentNet.Manager is not null && pipe.ParentLogist.ParentNet.Manager.building is LogistCentral)))
 
                     {
                         if (ParentLogist.ParentNet.MaxIpNum > pipe.ParentLogist.ParentNet.MaxIpNum)
@@ -280,7 +279,7 @@ namespace Logist
 
 
                 var block = MapManager.GetBlock(pos.x + step[i], pos.y + step[i + 4]);
-                if (block is BaseBuild || block is LogistPipe)
+                if (block is BaseBuilding || block is LogistPipe)
                 {
                     ++con_num;
                     findbuilding[i] = true;

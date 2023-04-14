@@ -7,7 +7,7 @@ using Manager;
 
 namespace Logist
 {
-    public class LogistCentral : BaseBuild
+    public class LogistCentral : BaseBuilding
     {
         private LogistNetBlock managedlogist;
         private SpriteRenderer spriteRenderer;

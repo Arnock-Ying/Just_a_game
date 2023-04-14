@@ -10,7 +10,7 @@ using Logist;
 ///<summary>
 ///½¨Öþ¹æ»®
 ///</summary>
-public class BuildingProject : BaseBuild
+public class BuildingProject : BaseBuilding
 {
     //private GameObject prefab;
     private Block projecting;

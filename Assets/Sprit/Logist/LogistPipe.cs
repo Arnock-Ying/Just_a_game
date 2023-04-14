@@ -260,7 +260,6 @@ namespace Logist
                 }
             }
 
-
             //释放合并所产生的垃圾空间
             GC.Collect();
             return;

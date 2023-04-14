@@ -41,6 +41,7 @@ namespace Logist
         {
             if (item == null || toInter == null)
                 DestroyTrafficItems();
+
         }
 
         // Update is called once per frame

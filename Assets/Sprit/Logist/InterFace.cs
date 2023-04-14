@@ -18,8 +18,7 @@ namespace Logist
         public List<Item> asks = null;
         public Router Router { get => router; }
         public byte Ip { get => localip; }
-        private LogistNetBlock parentLogist = null;
-        public override LogistNetBlock ParentLogist { get => parentLogist; set => parentLogist = value; }
+        public override LogistNetBlock ParentLogist { get => pipe.ParentLogist; }
 
         /// <summary>
         /// 获取IP
@@ -27,10 +26,10 @@ namespace Logist
         /// <returns></returns>
         public string GetIP()
         {
-            if (parentLogist == null)
+            if (ParentLogist == null)
                 return localip.ToString();
             else
-                return $"{parentLogist.ParentNet.Manager.GetIP()}.{localip}";
+                return $"{ParentLogist.ParentNet.Manager.GetIP()}.{localip}";
         }
 
         /// <summary>
@@ -83,7 +82,7 @@ namespace Logist
                 if (have_number <= 0) return false;
                 if (have_number < maxPackage) maxPackage = have_number;
 
-                answer = parentLogist.ParentNet.AskQueue.Answer(id, maxPackage);
+                answer = ParentLogist.ParentNet.AskQueue.Answer(id, maxPackage);
                 answerid = id;
                 if (answer == null) return false;
                 return true;
@@ -132,10 +131,10 @@ namespace Logist
 
         public override void DestroyBlock()
         {
-            if (parentLogist != null)
-                if (parentLogist.ParentNet != null)
+            if (ParentLogist != null)
+                if (ParentLogist.ParentNet != null)
                 {
-                    parentLogist.ParentNet.DelIp(this.ParentLogist);
+                    ParentLogist.ParentNet.DelIp(this.ParentLogist);
                 }
             building.InterFaces.Remove(this);
             Destroy(this.gameObject);

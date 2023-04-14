@@ -209,6 +209,7 @@ namespace GameBase
         }
         private bool Push(int ip, string id, int num, int high = 0)
         {
+            Debug.Log($"ip:{ip},Item:{id},{num},high:{high}");
             if (ip >= 256 || ip < 0) return false;
             if (num < 0) return false;
             if (high >= maxPriority || high < 0) return false;
@@ -222,6 +223,8 @@ namespace GameBase
                 }
             }
             queues[id][high].Enqueue(new((byte)ip, num));
+            UpdateTop(id);
+            Debug.Log($"queues top of {id} : {tops[id].Value}");
             return true;
         }
 
@@ -243,6 +246,7 @@ namespace GameBase
             if (tops[id] == null)
                 if (!UpdateTop(id)) return null;
 
+
             KeyValuePair<byte, int>? ans = null;
             if (tops[id].Value.Value > maxPackage)
             {
@@ -254,6 +258,7 @@ namespace GameBase
                 ans = tops[id];
                 tops[id] = null;
                 UpdateTop(id);
+                
             }
 
             return ans;
@@ -273,7 +278,8 @@ namespace GameBase
         public readonly int id;
         static int nowid = 0;
 
-        private bool alive = false;
+        private bool threadPause = true;
+        private bool threadAlive = true;
         private Thread thread;
         public List<LogistNetBlock> Blocks { get; } = new();
         public AskQueue AskQueue { get; } = new();
@@ -290,38 +296,53 @@ namespace GameBase
             //创建请求应答线程
             thread = new(RotateAnswer);
             thread.Start();
-
         }
 
         ~LogistNet()
         {
-            alive = false;
+            threadAlive = false;
         }
         public void RotateAnswer()
         {
-            while (true)
+            while (threadAlive)
             {
                 //土方法锁线程，待优化
-                if (alive)
+                if (threadPause)
                 {
-                    foreach (var i in AskQueue.Tops)
+                    try
                     {
-                        if (i.Value != null)
-                            foreach (var j in Blocks)
-                            {
-                                if (!alive) break;
-                                if (j.Inter != null) j.Inter.AnswerLogist(i.Key);
-                            }
+                        foreach (var i in AskQueue.Tops)
+                        {
+                            if (i.Value != null)
+                                foreach (var j in Blocks)
+                                {
+                                    if (!threadPause) break;
+                                    if (j.Inter != null)
+                                    {
+                                        j.Inter.AnswerLogist(i.Key);
+                                    }
+                                }
+                            if (!threadPause) break;
+                        }
                     }
+                    catch(System.InvalidOperationException)
+                    {
+                        Debug.Log("out");
+                    }
+                    
+
                 }
             }
         }
 
         public void PushAskQueue(int ip, Item item, int high = 0)
         {
-            alive = false;
+            threadPause = false;
+
+
             AskQueue.Push(ip, item, high);
-            alive = true;
+
+            threadPause = true;
         }
 
         public bool SetManager(InterFace mng)
@@ -499,7 +520,7 @@ namespace GameBase
         private int maxCount = 0;
         private int count = 0;
 
-        private Dictionary<string, int> items;
+        private Dictionary<string, int> items = new();
 
         public Dictionary<string, int> Items { get => items; }
         public int Count { get { if (maxCount == 0) return 0; else return count; } }

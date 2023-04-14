@@ -4,7 +4,7 @@ using UnityEngine;
 
 using GameBase;
 
-public class EnergyCable : BaseBuild
+public class EnergyCable : BaseBuilding
 {
 
 }

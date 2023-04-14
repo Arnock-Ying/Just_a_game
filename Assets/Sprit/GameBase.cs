@@ -65,14 +65,15 @@ namespace GameBase
     /// <summary>
     /// 建筑基类
     /// </summary>
-    public class BaseBuild : Block
+    public class BaseBuilding : Block
     {
         [SerializeField]
         protected int maxInvent = 0;
 
         protected LogistNetBlock privateLogist = null;
         protected EnergyNet privateEngrgy;
-        protected Inventory invent = null;
+        protected Inventory invent = new();
+        private List<Item> asks = new();
 
         public Inventory Invent { get => invent; }
         public override LogistNetBlock ParentLogist { get => privateLogist; set => privateLogist = value; }
@@ -87,6 +88,12 @@ namespace GameBase
             return invent.Output(id, count);
         }
 
+        public void AddInterFace(InterFace inter)
+        {
+            this.InterFaces.Add(inter);
+            inter.building = this;
+            inter.asks = asks;
+        }
     }
 
     public class Formula
@@ -105,7 +112,7 @@ namespace GameBase
         }
     }
 
-    public class ProductionBuilding : BaseBuild
+    public class ProductionBuilding : BaseBuilding
     {
         protected Formula formula = null;
         protected float efficiency = 1;
@@ -324,7 +331,7 @@ namespace GameBase
                 maxIpNum = 0;
                 return false;
             }
-            if (mng.Build is LogistCentral logist)
+            if (mng.building is LogistCentral logist)
             {
                 maxIpNum = logist.MaxIPNum();
                 if (maxIpNum > 256) maxIpNum = 256;

@@ -4,7 +4,7 @@ using UnityEngine;
 using GameBase;
 using Manager;
 
-public class MiningMach : BaseBuild
+public class MiningMach : BaseBuilding
 {
     [SerializeField]
     private Vector2Int[] MiningRange = new Vector2Int[1];

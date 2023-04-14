@@ -60,7 +60,7 @@ namespace Logist
             pipe.setRelayRoute(Router.MakeTable(localip, dir), dir);
         }
 
-        public void AskLogist(Item item, int high = 0)//由建筑主动拉起请求发送
+        public void AskLogist(Item item, int high = 4)//由建筑主动拉起请求发送
         {
             asks.Add(item);
             ParentLogist.ParentNet.PushAskQueue(localip, item, high);

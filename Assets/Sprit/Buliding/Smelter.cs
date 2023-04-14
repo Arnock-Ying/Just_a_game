@@ -19,6 +19,6 @@ public class Smelter : ProductionBuilding
 
     private void FixedUpdate()
     {
-        
+
     }
 }

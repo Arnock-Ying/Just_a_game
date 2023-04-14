@@ -116,19 +116,42 @@ namespace GameBase
     {
         protected Formula formula = null;
         protected float efficiency = 1;
+        protected bool enable = true;
+        protected float timer = 0;
+        protected const float delayTime = 1;
 
         protected void Start()
         {
-            Item wood = new("wood", 1);
+            maxInvent = 100;
+            invent = new();
+            Item wood = new("wood", 1);//临时用用
             List<Item> temp = new();
             temp.Add(wood);
             formula = new(temp);
-
         }
 
         protected void Update()
         {
-            
+            if (enable)
+            {
+                timer += Time.deltaTime;
+                if (timer >= delayTime)
+                {
+                    foreach (Item it in formula.Material)
+                    {
+                        if (invent.Contains(it.id) < maxInvent)
+                        {
+                            //传进接口里
+                            foreach (InterFace iface in InterFaces)
+                            {
+                                iface.AskLogist(new Item(it.id, maxInvent));
+                            }
+                            debug = "请求: " + it.id + " " + maxInvent + "\n内存物品数量: " + invent.Contains(it.id);
+                        }
+                    }
+                    timer = 0;
+                }
+            }
         }
     }
 

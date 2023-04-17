@@ -108,5 +108,6 @@ namespace Logist
                 str += $"ip: {i}, dir: {(Dircation)(vs[i] & 3)}, len: {vs[i] >> 2}\n";
             return str;
         }
+
     }
 }

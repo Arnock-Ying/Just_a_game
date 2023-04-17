@@ -72,7 +72,7 @@ namespace GameBase
 
         protected LogistNetBlock privateLogist = null;
         protected EnergyNet privateEngrgy;
-        protected Inventory invent = new();
+        protected Inventory invent;
         private List<Item> asks = new();
 
         public Inventory Invent { get => invent; }
@@ -120,10 +120,11 @@ namespace GameBase
         protected float timer = 0;
         protected const float delayTime = 1;
 
+        bool first = true;
         protected void Start()
         {
             maxInvent = 100;
-            invent = new();
+            invent = new(maxInvent);
             Item wood = new("wood", 1);//临时用用
             List<Item> temp = new();
             temp.Add(wood);
@@ -132,26 +133,30 @@ namespace GameBase
 
         protected void Update()
         {
-            if (enable)
-            {
-                timer += Time.deltaTime;
-                if (timer >= delayTime)
+            if (first)
+                if (enable)
                 {
-                    foreach (Item it in formula.Material)
+
+                    timer += Time.deltaTime;
+                    if (timer >= delayTime)
                     {
-                        if (invent.Contains(it.id) < maxInvent)
+                        foreach (Item it in formula.Material)
                         {
-                            //传进接口里
-                            foreach (InterFace iface in InterFaces)
+                            if (invent.Contains(it.id) < maxInvent)
                             {
-                                iface.AskLogist(new Item(it.id, maxInvent));
+                                //传进接口里
+                                foreach (InterFace iface in InterFaces)
+                                {
+                                    if (maxInvent - invent.Contains(it.id) > 0)
+                                        iface.AskLogist(new Item(it.id, maxInvent - invent.Contains(it.id)));
+                                    //first = false;
+                                }
+                                debug = "请求: " + it.id + " " + maxInvent + "\n内存物品数量: \n" + invent.GetLog();
                             }
-                            debug = "请求: " + it.id + " " + maxInvent + "\n内存物品数量: " + invent.Contains(it.id);
                         }
+                        timer = 0;
                     }
-                    timer = 0;
                 }
-            }
         }
     }
 
@@ -199,62 +204,117 @@ namespace GameBase
     public class AskQueue
     {
         static readonly int maxPriority = 10;
-        Dictionary<string, Queue<KeyValuePair<byte, int>>[]> queues = new();
-        Dictionary<string, KeyValuePair<byte, int>?> tops = new();
-        public Dictionary<string, KeyValuePair<byte, int>?> Tops { get => tops; }
+        static readonly int maxip = 256;
+        Dictionary<string, (int, int)?[]> queues = new();
+        byte polling = 0;
 
-        public bool Push(int ip, Item item, int high = 0)
+        public string[] Keys
         {
-            return Push(ip, item.id, item.count, high);
+            get
+            {
+                int n = queues.Keys.Count;
+                string[] keys = new string[n + 1];
+                {
+                    int i = 0;
+                    foreach (var s in queues.Keys)
+                    {
+                        keys[i] = s;
+                        ++i;
+                    }
+                }
+                return keys;
+            }
         }
-        private bool Push(int ip, string id, int num, int high = 0)
+
+        public (byte, int)? Tops(string id)
         {
+            return queues[id][polling] == null ? null : new(polling, queues[id][polling].Value.Item1);
+        }
+
+        public bool UpdataAsk(int ip, Item item, int high = 0)
+        {
+            return UpdataAsk(ip, item.id, item.count, high);
+        }
+        private bool UpdataAsk(int ip, string id, int num, int high = 0)
+        {
+            Debug.Log($"ip:{ip},Item:{id},{num},high:{high}");
             if (ip >= 256 || ip < 0) return false;
             if (num < 0) return false;
             if (high >= maxPriority || high < 0) return false;
+
             if (!queues.ContainsKey(id))
             {
-                queues.Add(id, new Queue<KeyValuePair<byte, int>>[maxPriority]);
-                tops.Add(id, null);
-                for (int i = 0; i < maxPriority; ++i)
-                {
-                    queues[id][i] = new();
-                }
+                queues.Add(id, new (int, int)?[maxip]);
+                for (int i = 0; i < maxip; ++i) queues[id][i] = null;
             }
-            queues[id][high].Enqueue(new((byte)ip, num));
+
+            queues[id][ip] = new(num, high);
+            //if (!queues.ContainsKey(id))
+            //{
+            //    queues.Add(id, new (byte, int)?[maxip]);
+            //    Tops.Add(id, null);
+            //    for (int i = 0; i < maxPriority; ++i)
+            //    {
+            //        queues[id][i] = new();
+            //    }
+            //}
+            //queues[id][high].Enqueue(new((byte)ip, num));
+            //UpdateTop(id);
+            Debug.Log($"Item:ip:{ip},Item:{id},{num},high:{high};\nqueues top of {id} : {(Tops(id) == null ? null : Tops(id).Value)}");
             return true;
         }
 
-        private bool UpdateTop(string id)
-        {
-            for (int i = maxPriority - 1; i >= 0; --i)
-            {
-                if (queues[id][i].Count != 0)
-                {
-                    tops[id] = queues[id][i].Dequeue();
-                    return true;
-                }
-            }
-            return false;
-        }
-        public KeyValuePair<byte, int>? Answer(string id, int maxPackage = 1)
+        //private bool UpdateTop(string id)
+        //{
+        //    if (Tops[id] != null) return false;
+        //    for (int i = maxPriority - 1; i >= 0; --i)
+        //    {
+        //        if (queues[id][i].Count != 0)
+        //        {
+        //            Tops[id] = queues[id][i].Dequeue();
+        //            return true;
+        //        }
+        //    }
+        //    return false;
+        //}
+        public (byte, int)? Answer(string id, int maxPackage = 1)
         {
             if (!queues.ContainsKey(id)) return null;
-            if (tops[id] == null)
-                if (!UpdateTop(id)) return null;
 
-            KeyValuePair<byte, int>? ans = null;
-            if (tops[id].Value.Value > maxPackage)
+            //if (Tops(id) == null)
+            //    if (!UpdateTop(id)) return null;
+
+
+            (byte, int)? ans = null;// (queues[id][polling] == null) ? null : new(polling, queues[id][polling].Value.Item1);
+            if (queues[id][polling] != null)
+                if (queues[id][polling].Value.Item1 > maxPackage)
+                {
+                    ans = new(polling, maxPackage);
+                    queues[id][polling] = new(queues[id][polling].Value.Item1 - maxPackage, queues[id][polling].Value.Item2);
+                }
+                else
+                {
+                    ans = new(polling, maxPackage);
+                    queues[id][polling] = null;
+                }
+            int? maxh = null;
+            for (int i = 0; i < maxip; ++i)
             {
-                ans = new(tops[id].Value.Key, maxPackage);
-                tops[id] = new(tops[id].Value.Key, tops[id].Value.Value - maxPackage);
+                if (queues[id][i] != null)
+                    if (maxh == null || maxh < queues[id][i].Value.Item2)
+                        maxh = queues[id][i].Value.Item2;
+
             }
-            else
+            if (maxh == null) return null;
+            for (int _i = 0; _i < maxip; ++_i)
             {
-                ans = tops[id];
-                tops[id] = null;
-                UpdateTop(id);
+                int i = (_i + polling + 1) % maxip;
+                if (queues[id][i] != null && queues[id][i].Value.Item2 >= maxh)
+                {
+                    polling = (byte)i;
+                }
             }
+
 
             return ans;
         }
@@ -273,7 +333,8 @@ namespace GameBase
         public readonly int id;
         static int nowid = 0;
 
-        private bool alive = false;
+        private bool threadPause = true;
+        private bool threadAlive = true;
         private Thread thread;
         public List<LogistNetBlock> Blocks { get; } = new();
         public AskQueue AskQueue { get; } = new();
@@ -290,38 +351,48 @@ namespace GameBase
             //创建请求应答线程
             thread = new(RotateAnswer);
             thread.Start();
-
         }
 
         ~LogistNet()
         {
-            alive = false;
+            threadAlive = false;
         }
         public void RotateAnswer()
         {
-            while (true)
+            while (threadAlive)
             {
                 //土方法锁线程，待优化
-                if (alive)
+                if (threadPause)
                 {
-                    foreach (var i in AskQueue.Tops)
+                    string[] keys = AskQueue.Keys;
+                    for (int i = 0; i < keys.Length; ++i)
                     {
-                        if (i.Value != null)
+                        if (keys[i] != null)
                             foreach (var j in Blocks)
                             {
-                                if (!alive) break;
-                                if (j.Inter != null) j.Inter.AnswerLogist(i.Key);
+                                if (!threadPause) break;
+                                if (j.Inter != null && !(AskQueue.Tops(keys[i]) != null && j.Inter.Ip == AskQueue.Tops(keys[i]).Value.Item1))
+                                {
+                                    j.Inter.AnswerLogist(keys[i]);
+                                }
                             }
+                        if (!threadPause) break;
                     }
+
+
+
                 }
             }
         }
 
         public void PushAskQueue(int ip, Item item, int high = 0)
         {
-            alive = false;
-            AskQueue.Push(ip, item, high);
-            alive = true;
+            threadPause = false;
+
+
+            AskQueue.UpdataAsk(ip, item, high);
+
+            threadPause = true;
         }
 
         public bool SetManager(InterFace mng)
@@ -504,21 +575,27 @@ namespace GameBase
         public Dictionary<string, int> Items { get => items; }
         public int Count { get { if (maxCount == 0) return 0; else return count; } }
         public int MaxCount { get { return maxCount; } }
-        public Inventory()
-        {
-            maxCount = 0;
-        }
+
         public Inventory(int size)
         {
             maxCount = size;
             items = new();
         }
-        public int Contains(string s)
+        public int Contains(string id)
         {
-            if (items.ContainsKey(s))
-                return items[s];
-            else
+            //if (items == null) Debug.Log("这里怎么能是null呢？这不能啊");
+            //待优化
+            try
+            {
+                if (items.TryGetValue(id, out int ans))
+                    return ans;
+                else
+                    return -1;
+            }
+            catch (System.NullReferenceException)
+            {
                 return -1;
+            }
         }
         public bool Input(string id, int number)
         {

@@ -24,7 +24,7 @@ namespace Manager
                 if (instend.itemNumToId[i] == id)
                     return instend.peakageImage[i];
             }
-            return null;
+            return instend.peakageImage[0];
         }
         public void Awake()
         {

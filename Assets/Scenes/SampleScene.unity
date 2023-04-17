@@ -508,6 +508,10 @@ MonoBehaviour:
   - {fileID: -676616128, guid: af0f0b84a8b7766468d0e06ca15a4ed6, type: 3}
   - {fileID: -2037441356, guid: af0f0b84a8b7766468d0e06ca15a4ed6, type: 3}
   - {fileID: -1874566578, guid: af0f0b84a8b7766468d0e06ca15a4ed6, type: 3}
+  peakageImage:
+  - {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
+  itemNumToId:
+  - wood
 --- !u!81 &458766343
 AudioListener:
   m_ObjectHideFlags: 0

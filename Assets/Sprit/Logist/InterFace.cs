@@ -13,13 +13,12 @@ namespace Logist
         [SerializeField]
         protected byte localip;
         private Router router = new(null);
-        private KeyValuePair<byte, int>? answer = null;
+        private (byte, int)? answer = null;
         private string answerid;
         public List<Item> asks = null;
         public Router Router { get => router; }
         public byte Ip { get => localip; }
-        private LogistNetBlock parentLogist = null;
-        public override LogistNetBlock ParentLogist { get => parentLogist; set => parentLogist = value; }
+        public override LogistNetBlock ParentLogist { get => pipe.ParentLogist; }
 
         /// <summary>
         /// 获取IP
@@ -27,10 +26,10 @@ namespace Logist
         /// <returns></returns>
         public string GetIP()
         {
-            if (parentLogist == null)
+            if (ParentLogist == null)
                 return localip.ToString();
             else
-                return $"{parentLogist.ParentNet.Manager.GetIP()}.{localip}";
+                return $"{ParentLogist.ParentNet.Manager.GetIP()}.{localip}";
         }
 
         /// <summary>
@@ -83,9 +82,10 @@ namespace Logist
                 if (have_number <= 0) return false;
                 if (have_number < maxPackage) maxPackage = have_number;
 
-                answer = parentLogist.ParentNet.AskQueue.Answer(id, maxPackage);
-                answerid = id;
+                answer = ParentLogist.ParentNet.AskQueue.Answer(id, maxPackage);
                 if (answer == null) return false;
+                answerid = id;
+
                 return true;
             }
         }
@@ -94,33 +94,34 @@ namespace Logist
         {
             if (answer == null) return;
             //握手，握手失败则忽视请求
-            var des = ParentLogist.ParentNet.GetInterFace(answer.Value.Key);
+            var des = ParentLogist.ParentNet.GetInterFace(answer.Value.Item1);
             if (des != null && !des.GetReanswer(answerid, answer)) return;
             //物品封装发包
-            Item item = building.PopItem(answerid, answer.Value.Value);
-            GameObject obj = new GameObject();
-            obj.AddComponent<TrafficItems>().Init(item, answer.Value.Key, this);
+
+            Item item = building.PopItem(answerid, answer.Value.Item2);
+            GameObject obj = new GameObject($"{item.id}-{item.count} peakage");
+            obj.AddComponent<TrafficItems>().Init(item, answer.Value.Item1, this);
 
             answer = null;
             return;
         }
 
-        public virtual bool GetReanswer(string id, KeyValuePair<byte, int>? answer)
+        public virtual bool GetReanswer(string id, (byte, int)? answer)
         {
             //接受响应并通知建筑
             if (answer == null) return false;
-            if (answer.Value.Key != localip) return false;
+            if (answer.Value.Item1 != localip) return false;
 
             for (int i = 0; i < asks.Count; ++i)
             {
                 if (asks[i].id == id)
                 {
-                    if (asks[i].count > answer.Value.Value)
+                    if (asks[i].count > answer.Value.Item2)
                     {
-                        asks[i].count -= answer.Value.Value;
+                        asks[i].count -= answer.Value.Item2;
                         return true;
                     }
-                    else if (asks[i].count == answer.Value.Value)
+                    else if (asks[i].count == answer.Value.Item2)
                     {
                         asks.RemoveAt(i);
                         return true;
@@ -132,13 +133,19 @@ namespace Logist
 
         public override void DestroyBlock()
         {
-            if (parentLogist != null)
-                if (parentLogist.ParentNet != null)
+            if (ParentLogist != null)
+                if (ParentLogist.ParentNet != null)
                 {
-                    parentLogist.ParentNet.DelIp(this.ParentLogist);
+                    ParentLogist.ParentNet.DelIp(this.ParentLogist);
                 }
             building.InterFaces.Remove(this);
             Destroy(this.gameObject);
+        }
+
+        public void InputItem(Item item)
+        {
+            if (!building.Invent.Input(item.id, item.count))
+                Debug.Log($"Input {item.id} {item.count} Error");
         }
     }
 }

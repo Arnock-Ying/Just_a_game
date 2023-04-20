@@ -95,7 +95,12 @@ namespace Logist
             if (answer == null) return;
             //握手，握手失败则忽视请求
             var des = ParentLogist.ParentNet.GetInterFace(answer.Value.Item1);
-            if (des != null && !des.GetReanswer(answerid, answer)) return;
+            if (des == null || !des.GetReanswer(answerid, answer))
+            {
+                Debug.Log();
+                Debug.LogError($"to {answer.Value.Item1} shake hands error with des {(des == null ? "null" : des.name)}!");
+                return;
+            }
             //物品封装发包
 
             Item item = building.PopItem(answerid, answer.Value.Item2);
@@ -137,6 +142,7 @@ namespace Logist
                 if (ParentLogist.ParentNet != null)
                 {
                     ParentLogist.ParentNet.DelIp(this.ParentLogist);
+                    Debug.Log($"del {localip}");
                 }
             building.InterFaces.Remove(this);
             Destroy(this.gameObject);

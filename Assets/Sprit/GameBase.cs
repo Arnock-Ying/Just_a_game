@@ -368,12 +368,12 @@ namespace GameBase
                     for (int i = 0; i < keys.Length; ++i)
                     {
                         if (keys[i] != null)
-                            foreach (var j in Blocks)
+                            for (int j = 0; j < Blocks.Count; ++j)
                             {
                                 if (!threadPause) break;
-                                if (j.Inter != null && !(AskQueue.Tops(keys[i]) != null && j.Inter.Ip == AskQueue.Tops(keys[i]).Value.Item1))
+                                if (Blocks[j].Inter != null && !(AskQueue.Tops(keys[i]) != null && Blocks[j].Inter.Ip == AskQueue.Tops(keys[i]).Value.Item1))
                                 {
-                                    j.Inter.AnswerLogist(keys[i]);
+                                    Blocks[j].Inter.AnswerLogist(keys[i]);
                                 }
                             }
                         if (!threadPause) break;
@@ -494,7 +494,7 @@ namespace GameBase
         public InterFace GetInterFace(int ip)
         {
             if (ip > 255 || ip < 0) return null;
-            return builds[ip].Inter;
+            return builds[ip] != null ? builds[ip].Inter : null;
         }
 
         public static int BuildSum(LogistNet net1, LogistNet net2)
@@ -542,6 +542,7 @@ namespace GameBase
             if (netblock.Inter != null && this.Inter != null && this.ParentNet != null)
             {
                 if (!ParentNet.SetIp(netblock)) throw new System.Exception("out of size!");
+                else Debug.LogWarning("marge networking");
             }
             foreach (var i in netblock.pipes)
             {
@@ -549,6 +550,14 @@ namespace GameBase
                 i.ParentLogist = this;
             }
             netblock.pipes.Clear();
+        }
+
+        public override string ToString()
+        {
+            string ans = "";
+            ans += "The ip table:{\n";
+            ans += ""
+            return ans;
         }
     }
 

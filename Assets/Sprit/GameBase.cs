@@ -34,22 +34,22 @@ namespace GameBase
             {
                 if (MapManager.GetBlock(i, pos.y - Mathf.FloorToInt(size.y / 2.0f) - 1) is LogistPipe pipe1)
                 {
-                    pipe1.BuildPipe(false);
+                    pipe1.BuildPipe(false, true);
                 }
                 if (MapManager.GetBlock(i, pos.y + Mathf.CeilToInt(size.y / 2.0f)) is LogistPipe pipe2)
                 {
-                    pipe2.BuildPipe(false);
+                    pipe2.BuildPipe(false, true);
                 }
             }
             for (int i = pos.y - Mathf.FloorToInt(size.y / 2.0f); i < pos.y + Mathf.CeilToInt(size.y / 2.0f); ++i)
             {
                 if (MapManager.GetBlock(pos.x - Mathf.FloorToInt(size.x / 2.0f) - 1, i) is LogistPipe pipe1)
                 {
-                    pipe1.BuildPipe(false);
+                    pipe1.BuildPipe(false, true);
                 }
                 if (MapManager.GetBlock(pos.x + Mathf.CeilToInt(size.x / 2.0f), i) is LogistPipe pipe2)
                 {
-                    pipe2.BuildPipe(false);
+                    pipe2.BuildPipe(false, true);
                 }
             }
         }
@@ -433,6 +433,7 @@ namespace GameBase
             builds[min] = block;
             block.Inter.SetIP((byte)min);
             count += 1;
+            Debug.Log(ToString());
             return true;
         }
         public bool DelIp(LogistNetBlock block)
@@ -484,6 +485,7 @@ namespace GameBase
             {
                 if (i.Inter != null) i.Inter.SendRouter();
             }
+
             //for (int i = 0; i < maxIpNum; ++i)
             //{
             //	if (builds[i] != null)
@@ -508,6 +510,18 @@ namespace GameBase
                 }
             }
             return sum;
+        }
+
+        public override string ToString()
+        {
+            string ans = $"No.{id} Net:\n";
+            ans += "The ip table:{\n";
+            for (int i = 0; i < 256; ++i)
+            {
+                ans += $"ip:{i}->inter:{(builds[i] == null ? "null" : $"No.{builds[i].id} Inter")}\n";
+            }
+
+            return ans;
         }
     }
 
@@ -552,13 +566,6 @@ namespace GameBase
             netblock.pipes.Clear();
         }
 
-        public override string ToString()
-        {
-            string ans = "";
-            ans += "The ip table:{\n";
-            ans += ""
-            return ans;
-        }
     }
 
     /// <summary>

@@ -88,7 +88,7 @@ namespace Logist
             }
         }
 
-        public void BuildPipe(bool rebuild)
+        public void BuildPipe(bool rebuild, bool relogist = false)
         {
             Vector2Int pos = new(Mathf.FloorToInt(transform.position.x), Mathf.FloorToInt(transform.position.y));
             //Debug.Log(pos);
@@ -157,6 +157,14 @@ namespace Logist
                 //if (parentLogist == null) parentLogist = new LogistNetBlcok();
                 //处理物流网络信息
                 UpdateParentLogist();
+                if(relogist)
+                {
+                    for(int i=0;i<4;++i)
+                        if(findbuilding[i] is LogistPipe pipe)
+                        {
+                            pipe.UpdateParentLogist();
+                        }
+                }
             }
         }
 

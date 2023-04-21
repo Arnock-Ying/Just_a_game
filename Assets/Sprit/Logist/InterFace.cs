@@ -97,8 +97,9 @@ namespace Logist
             var des = ParentLogist.ParentNet.GetInterFace(answer.Value.Item1);
             if (des == null || !des.GetReanswer(answerid, answer))
             {
-                Debug.Log();
+                Debug.Log(ParentLogist.ParentNet.ToString());
                 Debug.LogError($"to {answer.Value.Item1} shake hands error with des {(des == null ? "null" : des.name)}!");
+                answer = null;
                 return;
             }
             //物品封装发包
@@ -141,7 +142,8 @@ namespace Logist
             if (ParentLogist != null)
                 if (ParentLogist.ParentNet != null)
                 {
-                    ParentLogist.ParentNet.DelIp(this.ParentLogist);
+                    //析构有大问题
+                    //ParentLogist.ParentNet.DelIp(this.ParentLogist);
                     Debug.Log($"del {localip}");
                 }
             building.InterFaces.Remove(this);

@@ -9,13 +9,18 @@ namespace Logist
         Up,
         Down,
         Left,
-        Right
+        Right,
     }
+    
     public class Router
     {
 
         private ushort[] vs = new ushort[256];
         public readonly LogistPipe pipe;
+        public bool[] resend = new bool[4];
+        public bool[] comresend = new bool[4];
+        public bool newone = true;
+        public LogistCommand command = LogistCommand.Nulldate;
 
         public ushort[] CopyIpTable()
         {
@@ -34,7 +39,7 @@ namespace Logist
             return (Dircation)(vs[ip] & 3);
         }
 
-        private void Set(byte ip, Dircation dir, int len)
+        public void Set(byte ip, Dircation dir, int len)
         {
             vs[ip] = (ushort)((len << 2) | ((byte)dir & 3));
         }
@@ -56,11 +61,11 @@ namespace Logist
             return true;
         }
 
-        public KeyValuePair<bool, bool> ChangeRoute(ushort[] ipTable, Dircation _dir)
+        public void ChangeRoute(ushort[] ipTable, Dircation _dir)
         {
             Debug.Log($"{(pipe == null ? "interface" : pipe.transform.position)},{_dir}\n" + ToString(ipTable));
-            bool change = false;
-            bool rechange = false;
+            bool change = true;
+            bool rechange = true;
             int dir = (int)_dir ^ 1;
             for (int i = 0; i < 256; ++i)
             {
@@ -69,18 +74,109 @@ namespace Logist
                     if ((vs[i] & 3) == dir)
                         vs[i] = 0;
                     else
-                        rechange = true;
+                        rechange = false;
                 }
                 if ((((ipTable[i] >> 2) < (vs[i] >> 2)) || (vs[i] >> 2) == 0) && (ipTable[i] >> 2) != 0)
                 {
                     vs[i] = (ushort)(((ipTable[i] >> 2) << 2) | dir);
                     Debug.Log($"pi:{i},dir:{Dir((byte)i)},len:{Len((byte)i)}");
-                    change = true;
+                    change = false;
                 }
             }
-            return new(change, rechange);
+            if (command == LogistCommand.Update && change)
+            {
+                for (int i = 0; i < 4; ++i)
+                {
+                    resend[i] = false;
+                    comresend[i] = false;
+                }
+            }
+            else if (command == LogistCommand.Outdate && rechange)
+            {
+                for (int i = 0; i < 4; ++i)
+                {
+                    resend[i] = !resend[i];
+                    comresend[i] = !comresend[i];
+                }
+                command = LogistCommand.Update;
+            }
+            return;
         }
 
+        public void GetCommand(LogistCommand com, Dircation dir)
+        {
+            command = com;
+            switch (com)
+            {
+                case LogistCommand.Update:
+                    for (int i = 0; i < 4; ++i)
+                    {
+                        if ((i ^ 1) != (int)dir)
+                        {
+                            //未修改，设false
+                            resend[i] = true;
+                            comresend[i] = true;
+                        }
+                        else
+                        {
+                            resend[i] = false;
+                            comresend[i] = false;
+                        }
+                    }
+                    if (newone) newone = false;
+                    break;
+                case LogistCommand.Newdate:
+                    for (int i = 0; i < 4; ++i)
+                    {
+                        if (newone)
+                        {
+                            resend[i] = false;
+                            comresend[i] = false;
+                        }
+                        else
+                        {
+                            if ((i ^ 1) != (int)dir)
+                            {
+                                resend[i] = false;
+                                comresend[i] = false;
+                            }
+                            else
+                            {
+                                resend[i] = true;
+                                comresend[i] = true;
+                            }
+                            command = LogistCommand.Update;
+                        }
+                    }
+                    break;
+                case LogistCommand.Outdate:
+                    for (int i = 0; i < 4; ++i)
+                    {
+                        if ((i ^ 1) != (int)dir)
+                        {
+                            //未修改，置false
+                            resend[i] = true;
+                            //未修改，置false
+                            comresend[i] = true;
+                        }
+                        else
+                        {
+                            //未修改，置true
+                            resend[i] = false;
+                            //未修改，置true,command更新为Update
+                            comresend[i] = false;
+                        }
+                    }
+                    break;
+                default:
+                    for (int i = 0; i < 4; ++i)
+                    {
+                        resend[i] = false;
+                        comresend[i] = false;
+                    }
+                    break;
+            }
+        }
         public void Clear()
         {
             for (int i = 0; i < 256; ++i)
@@ -89,9 +185,10 @@ namespace Logist
         public static ushort[] MakeTable(byte ip, Dircation dir, int len = 1)
         {
             ushort[] vs = new ushort[256];
-            vs[ip] = (ushort)((len << 2) | ((byte)dir & 3));
+            vs[ip] = (ushort)((len << 2) | ((int)dir & 3));
             return vs;
         }
+
 
         public override string ToString()
         {

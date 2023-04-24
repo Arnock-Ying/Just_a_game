@@ -18,7 +18,7 @@ namespace Logist
         public List<Item> asks = null;
         public Router Router { get => router; }
         public byte Ip { get => localip; }
-        public override LogistNetBlock ParentLogist { get => pipe.ParentLogist; }
+        public override LogistNetBlock ParentLogist { get; set; } = null;
 
         /// <summary>
         /// 获取IP
@@ -46,23 +46,44 @@ namespace Logist
             debug = router.ToString();
             if (answer != null)
             {
-                SendPeakage();
+                int i = (SendPeakage());
+
+                if (answer != null && i < answer.Value.Item2)
+                    ParentLogist.ParentNet.AskQueue.PushAsk(answer.Value.Item1, answerid, answer.Value.Item2 - i);
             }
         }
 
         public void UpdateIp(ushort[] iptabe)
         {
             router.ChangeRoute(iptabe, (Dircation)((int)dir ^ 1));
+            router.Set(localip, 0, 0);
         }
         public void SendRouter()
         {
+            Dircation _dir = (Dircation)((int)dir ^ 1);
             pipe.setRelayRoute(Router.MakeTable(localip, dir), dir);
+            pipe.setRelayRouteCommand(LogistCommand.Update, dir);
         }
 
+        public void GetCommand(LogistCommand command)
+        {
+            switch (command)
+            {
+                case LogistCommand.Nulldate:
+                    break;
+                case LogistCommand.Update:
+                    break;
+                case LogistCommand.Newdate:
+                    SendRouter();
+                    break;
+                case LogistCommand.Outdate:
+                    break;
+            }
+        }
         public void AskLogist(Item item, int high = 4)//由建筑主动拉起请求发送
         {
             asks.Add(item);
-            ParentLogist.ParentNet.PushAskQueue(localip, item, high);
+            ParentLogist.ParentNet.UpdataAskQueue(localip, item, high);
         }
 
         public bool AnswerLogist(string id, int maxPackage = 1)
@@ -90,20 +111,27 @@ namespace Logist
             }
         }
 
-        private void SendPeakage()
+        private int SendPeakage()
         {
-            if (answer == null) return;
+            if (answer == null) return 0;
             //握手，握手失败则忽视请求
             var des = ParentLogist.ParentNet.GetInterFace(answer.Value.Item1);
-            if (des != null && !des.GetReanswer(answerid, answer)) return;
+            if (des == null || !des.GetReanswer(answerid, answer))
+            {
+                Debug.Log(ParentLogist.ParentNet.ToString());
+                Debug.LogError($"to {answer.Value.Item1} shake hands error with des {(des == null ? "null" : des.name)}!");
+                answer = null;
+                return 0;
+            }
             //物品封装发包
 
             Item item = building.PopItem(answerid, answer.Value.Item2);
+            if (item == null) return 0;
             GameObject obj = new GameObject($"{item.id}-{item.count} peakage");
             obj.AddComponent<TrafficItems>().Init(item, answer.Value.Item1, this);
 
             answer = null;
-            return;
+            return item.count;
         }
 
         public virtual bool GetReanswer(string id, (byte, int)? answer)
@@ -136,7 +164,9 @@ namespace Logist
             if (ParentLogist != null)
                 if (ParentLogist.ParentNet != null)
                 {
-                    ParentLogist.ParentNet.DelIp(this.ParentLogist);
+                    //析构有大问题
+                    //ParentLogist.ParentNet.DelIp(this.ParentLogist);
+                    Debug.Log($"del {localip}");
                 }
             building.InterFaces.Remove(this);
             Destroy(this.gameObject);

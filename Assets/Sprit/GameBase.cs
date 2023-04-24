@@ -136,7 +136,6 @@ namespace GameBase
             if (first)
                 if (enable)
                 {
-
                     timer += Time.deltaTime;
                     if (timer >= delayTime)
                     {
@@ -264,6 +263,23 @@ namespace GameBase
             return true;
         }
 
+        public bool PushAsk(int ip, string id, int num, int high = 0)
+        {
+            Debug.Log($"ip:{ip},Item:{id},{num},high:{high}");
+            if (ip >= 256 || ip < 0) return false;
+            if (num < 0) return false;
+            if (high >= maxPriority || high < 0) return false;
+
+            if (!queues.ContainsKey(id))
+            {
+                queues.Add(id, new (int, int)?[maxip]);
+                for (int i = 0; i < maxip; ++i) queues[id][i] = null;
+            }
+
+            queues[id][ip] = new(queues[id][ip].Value.Item1 + num, high);
+            Debug.Log($"Item:ip:{ip},Item:{id},{num},high:{high};\nqueues top of {id} : {(Tops(id) == null ? null : Tops(id).Value)}");
+            return true;
+        }
         //private bool UpdateTop(string id)
         //{
         //    if (Tops[id] != null) return false;
@@ -383,6 +399,16 @@ namespace GameBase
 
                 }
             }
+        }
+
+        public void UpdataAskQueue(int ip, Item item, int high = 0)
+        {
+            threadPause = false;
+
+
+            AskQueue.UpdataAsk(ip, item, high);
+
+            threadPause = true;
         }
 
         public void PushAskQueue(int ip, Item item, int high = 0)
@@ -646,7 +672,11 @@ namespace GameBase
                         count -= number;
                 }
                 else
-                    return null;
+                {
+                    number = items[id];
+                    if (items.Remove(id))
+                        count -= number;
+                }
             }
             else
                 return null;

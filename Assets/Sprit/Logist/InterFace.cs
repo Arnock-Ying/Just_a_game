@@ -49,7 +49,7 @@ namespace Logist
                 int i = (SendPeakage());
 
                 if (answer != null && i < answer.Value.Item2)
-                    ParentLogist.ParentNet.AskQueue.PushAsk(answer.Value.Item1, answerid, answer.Value.Item2 - i);
+                    ParentLogist.ParentNet.PushAskQueue(answer.Value.Item1, answerid, answer.Value.Item2 - i);
             }
         }
 
@@ -67,6 +67,7 @@ namespace Logist
 
         public void GetCommand(LogistCommand command)
         {
+            Debug.Log(transform.position + " input " + command);
             switch (command)
             {
                 case LogistCommand.Nulldate:

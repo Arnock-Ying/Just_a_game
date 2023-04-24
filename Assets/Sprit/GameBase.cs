@@ -34,22 +34,22 @@ namespace GameBase
             {
                 if (MapManager.GetBlock(i, pos.y - Mathf.FloorToInt(size.y / 2.0f) - 1) is LogistPipe pipe1)
                 {
-                    pipe1.BuildPipe(false);
+                    pipe1.BuildPipe(false, true);
                 }
                 if (MapManager.GetBlock(i, pos.y + Mathf.CeilToInt(size.y / 2.0f)) is LogistPipe pipe2)
                 {
-                    pipe2.BuildPipe(false);
+                    pipe2.BuildPipe(false, true);
                 }
             }
             for (int i = pos.y - Mathf.FloorToInt(size.y / 2.0f); i < pos.y + Mathf.CeilToInt(size.y / 2.0f); ++i)
             {
                 if (MapManager.GetBlock(pos.x - Mathf.FloorToInt(size.x / 2.0f) - 1, i) is LogistPipe pipe1)
                 {
-                    pipe1.BuildPipe(false);
+                    pipe1.BuildPipe(false, true);
                 }
                 if (MapManager.GetBlock(pos.x + Mathf.CeilToInt(size.x / 2.0f), i) is LogistPipe pipe2)
                 {
-                    pipe2.BuildPipe(false);
+                    pipe2.BuildPipe(false, true);
                 }
             }
         }
@@ -136,7 +136,6 @@ namespace GameBase
             if (first)
                 if (enable)
                 {
-
                     timer += Time.deltaTime;
                     if (timer >= delayTime)
                     {
@@ -264,6 +263,23 @@ namespace GameBase
             return true;
         }
 
+        public bool PushAsk(int ip, string id, int num, int high = 0)
+        {
+            Debug.Log($"ip:{ip},Item:{id},{num},high:{high}");
+            if (ip >= 256 || ip < 0) return false;
+            if (num < 0) return false;
+            if (high >= maxPriority || high < 0) return false;
+
+            if (!queues.ContainsKey(id))
+            {
+                queues.Add(id, new (int, int)?[maxip]);
+                for (int i = 0; i < maxip; ++i) queues[id][i] = null;
+            }
+
+            queues[id][ip] = new(queues[id][ip].Value.Item1 + num, high);
+            Debug.Log($"Item:ip:{ip},Item:{id},{num},high:{high};\nqueues top of {id} : {(Tops(id) == null ? null : Tops(id).Value)}");
+            return true;
+        }
         //private bool UpdateTop(string id)
         //{
         //    if (Tops[id] != null) return false;
@@ -368,12 +384,12 @@ namespace GameBase
                     for (int i = 0; i < keys.Length; ++i)
                     {
                         if (keys[i] != null)
-                            foreach (var j in Blocks)
+                            for (int j = 0; j < Blocks.Count; ++j)
                             {
                                 if (!threadPause) break;
-                                if (j.Inter != null && !(AskQueue.Tops(keys[i]) != null && j.Inter.Ip == AskQueue.Tops(keys[i]).Value.Item1))
+                                if (Blocks[j].Inter != null && !(AskQueue.Tops(keys[i]) != null && Blocks[j].Inter.Ip == AskQueue.Tops(keys[i]).Value.Item1))
                                 {
-                                    j.Inter.AnswerLogist(keys[i]);
+                                    Blocks[j].Inter.AnswerLogist(keys[i]);
                                 }
                             }
                         if (!threadPause) break;
@@ -383,6 +399,16 @@ namespace GameBase
 
                 }
             }
+        }
+
+        public void UpdataAskQueue(int ip, Item item, int high = 0)
+        {
+            threadPause = false;
+
+
+            AskQueue.UpdataAsk(ip, item, high);
+
+            threadPause = true;
         }
 
         public void PushAskQueue(int ip, Item item, int high = 0)
@@ -433,6 +459,7 @@ namespace GameBase
             builds[min] = block;
             block.Inter.SetIP((byte)min);
             count += 1;
+            Debug.Log(ToString());
             return true;
         }
         public bool DelIp(LogistNetBlock block)
@@ -484,6 +511,7 @@ namespace GameBase
             {
                 if (i.Inter != null) i.Inter.SendRouter();
             }
+
             //for (int i = 0; i < maxIpNum; ++i)
             //{
             //	if (builds[i] != null)
@@ -494,7 +522,7 @@ namespace GameBase
         public InterFace GetInterFace(int ip)
         {
             if (ip > 255 || ip < 0) return null;
-            return builds[ip].Inter;
+            return builds[ip] != null ? builds[ip].Inter : null;
         }
 
         public static int BuildSum(LogistNet net1, LogistNet net2)
@@ -508,6 +536,18 @@ namespace GameBase
                 }
             }
             return sum;
+        }
+
+        public override string ToString()
+        {
+            string ans = $"No.{id} Net:\n";
+            ans += "The ip table:{\n";
+            for (int i = 0; i < 256; ++i)
+            {
+                ans += $"ip:{i}->inter:{(builds[i] == null ? "null" : $"No.{builds[i].id} Inter")}\n";
+            }
+
+            return ans;
         }
     }
 
@@ -542,6 +582,7 @@ namespace GameBase
             if (netblock.Inter != null && this.Inter != null && this.ParentNet != null)
             {
                 if (!ParentNet.SetIp(netblock)) throw new System.Exception("out of size!");
+                else Debug.LogWarning("marge networking");
             }
             foreach (var i in netblock.pipes)
             {
@@ -550,6 +591,7 @@ namespace GameBase
             }
             netblock.pipes.Clear();
         }
+
     }
 
     /// <summary>
@@ -630,7 +672,11 @@ namespace GameBase
                         count -= number;
                 }
                 else
-                    return null;
+                {
+                    number = items[id];
+                    if (items.Remove(id))
+                        count -= number;
+                }
             }
             else
                 return null;

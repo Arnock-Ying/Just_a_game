@@ -7,6 +7,13 @@ using Manager;
 
 namespace Logist
 {
+    public enum LogistCommand
+    {
+        Nulldate = -1,
+        Update,
+        Newdate,
+        Outdate,
+    }
     public class LogistPipe : Block
     {
         [SerializeField]
@@ -15,6 +22,8 @@ namespace Logist
 
         Router router = null;
         ushort[][] temp_rout = new ushort[4][], inter_rout = new ushort[4][];
+        LogistCommand[] temp_com = new LogistCommand[4], inter_com = new LogistCommand[4];
+
 
         int con_num = 0;    //连接数量
         Block[] findbuilding = new Block[4];//上下左右是否有建筑
@@ -25,16 +34,47 @@ namespace Logist
 
         private void Start()
         {
+            for (int i = 0; i < 4; ++i)
+            {
+                temp_rout[i] = null;
+                inter_rout[i] = null;
+                temp_com[i] = LogistCommand.Nulldate;
+                inter_com[i] = LogistCommand.Nulldate;
+            }
             BuildPipe(true);
         }
 
         private void FixedUpdate()
         {
+            bool flgchange = false;
             for (int i = 0; i < 4; ++i)
             {
-                if (temp_rout[i] != null) relayRoute(temp_rout[i], (Dircation)i);
-                temp_rout[i] = inter_rout[i];
-                inter_rout[i] = null;
+                if (temp_com[i] != LogistCommand.Nulldate)
+                {
+                    relayRouteCommand(temp_com[i], (Dircation)i);
+                    flgchange = true;
+                }
+                if (temp_rout[i] != null)
+                {
+                    relayRoute(temp_rout[i], (Dircation)i);
+                    flgchange = true;
+                }
+
+            }
+            SendRoute();
+            for (int j = 0; j < 4; ++j)
+            {
+                if (flgchange && router != null)
+                {
+                    router.resend[j] = false;
+                    router.comresend[j] = false;
+                    router.command = LogistCommand.Nulldate;
+                }
+                temp_com[j] = inter_com[j];
+                temp_rout[j] = inter_rout[j];
+                inter_rout[j] = null;
+                inter_com[j] = LogistCommand.Nulldate;
+
             }
             debug = (parentLogist == null ? "nullnet" :
                   $" LogistNetBlock = {(parentLogist.Inter == null ? "null" : parentLogist.Inter.building.name)} : {parentLogist.id}")
@@ -42,7 +82,7 @@ namespace Logist
 
             if (router != null)
             {
-                debug += $"router {parentLogist.ParentNet.MaxIpNum}:\n";
+                debug += $"router {parentLogist.ParentNet.MaxIpNum} {(router.newone ? "new one" : "")}:\n";
                 for (byte i = 0; i < parentLogist.ParentNet.MaxIpNum; ++i)
                     debug += $"ip: {i}, dir: {router.Dir(i)}, len: {router.Len(i)}\n";
             }
@@ -51,6 +91,10 @@ namespace Logist
         public void setRelayRoute(ushort[] rout, Dircation dir)
         {
             inter_rout[(int)dir] = rout;
+        }
+        public void setRelayRouteCommand(LogistCommand command, Dircation dir)
+        {
+            inter_com[(int)dir] = command;
         }
         private void relayRoute(ushort[] rout, Dircation dir)
         {
@@ -72,23 +116,70 @@ namespace Logist
             }
             else
             {
-                var back = router.ChangeRoute(rout, dir);
-                for (int i = 0; i < 4; ++i)
-                    if (back.Key && ((int)dir != (i ^ 1)) && findbuilding[i] != null)
-                    {
-                        if (findbuilding[i] is LogistPipe pipe) pipe.setRelayRoute(router.CopyIpTable(), (Dircation)(i));
-                        else if (findbuilding[i] is InterFace inter) inter.UpdateIp(router.CopyIpTable());
-                    }
-                    else if (back.Value && findbuilding[i] != null)
-                    {
-                        if (findbuilding[i] is LogistPipe pipe) pipe.setRelayRoute(router.CopyIpTable(), (Dircation)(i));
-                        else if (findbuilding[i] is InterFace inter) inter.UpdateIp(router.CopyIpTable());
-                    }
-                GC.Collect();//手动让垃圾回收器释放一下
+                Debug.Log(transform.position + "get router form " + (Dircation)dir);
+                router.ChangeRoute(rout, dir);
             }
         }
 
-        public void BuildPipe(bool rebuild)
+        private void relayRouteCommand(LogistCommand command, Dircation dir)
+        {
+            if (con_num <= 1) return;
+            if (router == null)
+            {
+                for (int i = 0; i < 4; ++i)
+                    if ((int)dir != (i ^ 1) && findbuilding[i] != null)
+                    {
+                        if (findbuilding[i] is LogistPipe pipe)
+                        {
+                            Debug.Log($"{transform.position} pipe with null nouter to {(Dircation)i} with command {command}");
+                            pipe.setRelayRouteCommand(command, (Dircation)(i));
+                        }
+                        else if (findbuilding[i] is InterFace inter)
+                        {
+                            Debug.Log($"{transform.position}pipe with null nouter to {(Dircation)i} interface with command {command}");
+                            inter.GetCommand(command);
+                        }
+                    }
+            }
+            else
+            {
+                router.GetCommand(command, dir);
+                Debug.Log($"{transform.position}nouter get command {command} from {(Dircation)((int)dir ^ 1)}");
+            }
+        }
+
+        private void SendRoute()
+        {
+            if (router == null) return;
+
+            for (int i = 0; i < 4; ++i)
+            {
+                if (findbuilding[i] != null && router.comresend[i])
+                {
+                    if (findbuilding[i] is LogistPipe pipe)
+                    {
+                        Debug.Log(transform.position + $"nouter send command {router.command} to " + (Dircation)i);
+                        pipe.setRelayRouteCommand(router.command, (Dircation)(i));
+                    }
+                    else if (findbuilding[i] is InterFace inter) inter.GetCommand(router.command);
+                }
+            }
+            for (int i = 0; i < 4; ++i)
+            {
+                if (findbuilding[i] != null && router.resend[i])
+                {
+                    if (findbuilding[i] is LogistPipe pipe)
+                    {
+                        Debug.Log(transform.position + "nouter send table to " + (Dircation)i);
+                        pipe.setRelayRoute(router.CopyIpTable(), (Dircation)(i));
+                    }
+                    else if (findbuilding[i] is InterFace inter) inter.UpdateIp(router.CopyIpTable());
+                }
+            }
+
+        }
+
+        public void BuildPipe(bool rebuild, bool relogist = false)
         {
             Vector2Int pos = new(Mathf.FloorToInt(transform.position.x), Mathf.FloorToInt(transform.position.y));
             //Debug.Log(pos);
@@ -114,7 +205,7 @@ namespace Logist
                             findbuilding[i] = inter;
                         }
                     }
-                    if (block is LogistPipe pipe)
+                    else if (block is LogistPipe pipe)
                     {
                         if (findbuilding[i] is InterFace inter)
                             inter.DestroyBlock();
@@ -143,6 +234,17 @@ namespace Logist
                 if (router == null)
                 {
                     router = new(this);
+                    for (int i = 0; i < 4; ++i)
+                    {
+                        if (findbuilding[i] is LogistPipe pipe)
+                        {
+                            pipe.setRelayRouteCommand(LogistCommand.Newdate, (Dircation)i);
+                        }
+                        if(findbuilding[i] is InterFace inter)
+                        {
+                            inter.GetCommand(LogistCommand.Newdate);
+                        }
+                    }
                 }
             }
             else
@@ -157,7 +259,16 @@ namespace Logist
                 //if (parentLogist == null) parentLogist = new LogistNetBlcok();
                 //处理物流网络信息
                 UpdateParentLogist();
+                if (relogist)
+                {
+                    for (int i = 0; i < 4; ++i)
+                        if (findbuilding[i] is LogistPipe pipe)
+                        {
+                            pipe.UpdateParentLogist();
+                        }
+                }
             }
+
         }
 
         ///<summary>
@@ -194,9 +305,14 @@ namespace Logist
             {
                 this.parentLogist = new();
                 parentLogist.Inter = inter;
+                inter.ParentLogist = this.ParentLogist;
                 if (inter.building is LogistCentral)
                 {
                     parentLogist.ParentNet.SetManager(inter);
+                }
+                else
+                {
+                    parentLogist.ParentNet.SetIp(this.ParentLogist);
                 }
             }
             else
@@ -259,6 +375,23 @@ namespace Logist
                             pipe.ParentLogist.ParentNet.Marge(ParentLogist.ParentNet);
                     }
                 }
+            }
+
+            //接口处理
+            for (int i = 0; i < 4; ++i)
+            {
+                if (findbuilding[i] is InterFace inter)
+                    if (this.ParentLogist.Inter != inter)
+                        if (inter.ParentLogist != null)
+                            ParentLogist.ParentNet.SetIp(inter.ParentLogist);
+                        else
+                        {
+                            inter.ParentLogist = new();
+                            inter.ParentLogist.ParentNet = this.ParentLogist.ParentNet;
+                            this.ParentLogist.ParentNet.Blocks.Add(inter.ParentLogist);
+                            this.ParentLogist.ParentNet.SetIp(inter.ParentLogist);
+                        }
+
             }
 
             //释放合并所产生的垃圾空间

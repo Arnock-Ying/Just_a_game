@@ -272,6 +272,10 @@ namespace Logist
                         {
                             pipe.setRelayRouteCommand(LogistCommand.Newdate, (Dircation)i);
                         }
+                        if(findbuilding[i] is InterFace inter)
+                        {
+                            inter.GetCommand(LogistCommand.Newdate);
+                        }
                     }
                 }
             }

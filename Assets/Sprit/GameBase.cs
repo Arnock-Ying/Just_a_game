@@ -238,7 +238,7 @@ namespace GameBase
         }
         private bool UpdataAsk(int ip, string id, int num, int high = 0)
         {
-            Debug.Log($"ip:{ip},Item:{id},{num},high:{high}");
+            //Debug.Log($"ip:{ip},Item:{id},{num},high:{high}");
             if (ip >= 256 || ip < 0) return false;
             if (num < 0) return false;
             if (high >= maxPriority || high < 0) return false;
@@ -426,7 +426,7 @@ namespace GameBase
         {
             if (mng == null)
             {
-                maxIpNum = 0;
+                maxIpNum = 8;
                 return false;
             }
             if (mng.building is LogistCentral logist)
@@ -445,6 +445,8 @@ namespace GameBase
         }
         public bool SetIp(LogistNetBlock block)
         {
+
+            if (block.Inter == null) return false;
             int min = -1;
             for (int i = 1; i < maxIpNum; ++i)
             {
@@ -455,7 +457,6 @@ namespace GameBase
             }
 
             if (min == -1) return false;
-            if (block.Inter == null) return false;
 
             builds[min] = block;
             block.Inter.SetIP((byte)min);
@@ -648,6 +649,20 @@ namespace GameBase
             {
                 return -1;
             }
+        }
+        public bool CompelInput(string id,int number)
+        {
+            if (items.ContainsKey(id))
+            {
+                items[id] += number;
+                count += number;
+            }
+            else
+            {
+                items[id] = number;
+                count += number;
+            }
+            return true;
         }
         public bool Input(string id, int number)
         {

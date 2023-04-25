@@ -42,6 +42,21 @@ namespace Logist
                 inter_com[i] = LogistCommand.Nulldate;
             }
             BuildPipe(true);
+            //for (int i = 0; i < 4; ++i)
+            //{
+            //    if (findbuilding[i] is InterFace inter)
+            //    {
+            //        if (inter.building is LogistCentral manager && inter.ParentLogist.ParentNet.Manager == manager)
+            //        {
+            //            ParentLogist.ParentNet.SetManager(inter);
+            //        }
+            //        else if(inter.building is BaseBuilding)
+            //        {
+            //            ParentLogist.ParentNet.SetIp(inter.ParentLogist);
+            //        }
+
+            //    }
+            //}
         }
 
         private void FixedUpdate()
@@ -266,17 +281,7 @@ namespace Logist
                 if (router == null)
                 {
                     router = new(this);
-                    for (int i = 0; i < 4; ++i)
-                    {
-                        if (findbuilding[i] is LogistPipe pipe)
-                        {
-                            pipe.setRelayRouteCommand(LogistCommand.Newdate, (Dircation)i);
-                        }
-                        if(findbuilding[i] is InterFace inter)
-                        {
-                            inter.GetCommand(LogistCommand.Newdate);
-                        }
-                    }
+
                 }
             }
             else
@@ -291,16 +296,44 @@ namespace Logist
                 //if (parentLogist == null) parentLogist = new LogistNetBlcok();
                 //处理物流网络信息
                 UpdateParentLogist();
-                if (relogist)
+                //if (relogist)
+                //{
+                //    for (int i = 0; i < 4; ++i)
+                //        if (findbuilding[i] is LogistPipe pipe)
+                //        {
+                //            pipe.UpdateParentLogist();
+                //        }
+                //}
+            }
+            for (int i = 0; i < 4; ++i)
+            {
+                if (findbuilding[i] is InterFace inter)
                 {
-                    for (int i = 0; i < 4; ++i)
-                        if (findbuilding[i] is LogistPipe pipe)
+                    if (!inter.action)
+                    {
+                        if (inter.ParentLogist == null)
                         {
-                            pipe.UpdateParentLogist();
+                            inter.ParentLogist = new();
+                            inter.ParentLogist.Inter = inter;
+                            inter.ParentLogist.ParentNet = ParentLogist.ParentNet;
+                            ParentLogist.ParentNet.Blocks.Add(inter.ParentLogist);
+
                         }
+                        ParentLogist.ParentNet.SetIp(inter.ParentLogist);
+                    }
                 }
             }
-
+            for (int i = 0; i < 4; ++i)
+            {
+                if (findbuilding[i] is LogistPipe pipe)
+                {
+                    pipe.setRelayRouteCommand(LogistCommand.Newdate, (Dircation)i);
+                }
+                if (findbuilding[i] is InterFace inter)
+                {
+                    inter.GetCommand(LogistCommand.Newdate);
+                }
+            }
         }
 
         ///<summary>
@@ -313,9 +346,9 @@ namespace Logist
             for (int i = 0; i < 4; ++i)
             {
                 if (findbuilding[i] == null) counts[i] = -1;
-                else if (findbuilding[i] is LogistPipe pipe)
+                else if (findbuilding[i] is LogistPipe pipe && pipe.ParentLogist != null)
                     counts[i] = pipe.ParentLogist.Count;
-                else if (findbuilding[i] is InterFace inter)
+                else if (findbuilding[i] is InterFace)
                     counts[i] = 0;
             }
 
@@ -332,27 +365,29 @@ namespace Logist
             }
 
             //接入，如果四周没有则创建
-            if (minnum == -1) this.parentLogist = new();
-            else if (findbuilding[min] is InterFace inter)
+            if (this.ParentLogist == null)
             {
-                this.parentLogist = new();
-                parentLogist.Inter = inter;
-                inter.ParentLogist = this.ParentLogist;
-                if (inter.building is LogistCentral)
+                if (minnum == -1) this.parentLogist = new();
+                else if (findbuilding[min] is InterFace inter)
                 {
-                    parentLogist.ParentNet.SetManager(inter);
+                    this.parentLogist = new();
+                    parentLogist.Inter = inter;
+                    inter.ParentLogist = this.ParentLogist;
+                    if (inter.building is LogistCentral)
+                    {
+                        parentLogist.ParentNet.SetManager(inter);
+                    }
+                    else
+                    {
+                        parentLogist.ParentNet.SetIp(this.ParentLogist);
+                    }
                 }
                 else
                 {
-                    parentLogist.ParentNet.SetIp(this.ParentLogist);
+                    parentLogist = findbuilding[min].ParentLogist;
                 }
+                parentLogist.Add(this);
             }
-            else
-            {
-                parentLogist = findbuilding[min].ParentLogist;
-            }
-            parentLogist.Add(this);
-
             //合并空网络块
             if (parentLogist.Inter == null)
             {
@@ -391,20 +426,20 @@ namespace Logist
                     if (pipe.ParentLogist.Inter == null)
                         ParentLogist.Marge(pipe.ParentLogist);
                     else
-                    //合并两非空物流网络
-                    //周围网络非空，非相同物流网络，合并后网络不会过大，网络管理器不会出现冲突
-                    //其实应该写成LogistNet的静态，但是QAQ
-                    if ((ParentLogist.ParentNet != pipe.ParentLogist.ParentNet)
-                        && LogistNet.BuildSum(ParentLogist.ParentNet, pipe.ParentLogist.ParentNet)
-                            <= Math.Max(ParentLogist.ParentNet.MaxIpNum, pipe.ParentLogist.ParentNet.MaxIpNum)
-                        && !((ParentLogist.ParentNet.Manager is not null && ParentLogist.ParentNet.Manager.building is LogistCentral)
-                            && (pipe.ParentLogist.ParentNet.Manager is not null && pipe.ParentLogist.ParentNet.Manager.building is LogistCentral)))
-
+                        //合并两非空物流网络
+                        //周围网络非空，非相同物流网络，合并后网络不会过大，网络管理器不会出现冲突
+                        //其实应该写成LogistNet的静态，但是QAQ
+                        MargrLogistNet(pipe);
+                }
+                else if (findbuilding[i] is InterFace inter)
+                {
+                    if (this.parentLogist.Inter == null)
                     {
-                        if (ParentLogist.ParentNet.MaxIpNum > pipe.ParentLogist.ParentNet.MaxIpNum)
-                            ParentLogist.ParentNet.Marge(pipe.ParentLogist.ParentNet);
-                        else
-                            pipe.ParentLogist.ParentNet.Marge(ParentLogist.ParentNet);
+                        inter.ParentLogist.Marge(this.ParentLogist);
+                    }
+                    else
+                    {
+                        MargrLogistNet(inter);
                     }
                 }
             }
@@ -431,6 +466,22 @@ namespace Logist
             //释放合并所产生的垃圾空间
             GC.Collect();
             return;
+
+            void MargrLogistNet(Block pipe)
+            {
+                if ((ParentLogist.ParentNet != pipe.ParentLogist.ParentNet)
+                                        && LogistNet.BuildSum(ParentLogist.ParentNet, pipe.ParentLogist.ParentNet)
+                                            <= Math.Max(ParentLogist.ParentNet.MaxIpNum, pipe.ParentLogist.ParentNet.MaxIpNum)
+                                        && !((ParentLogist.ParentNet.Manager is not null && ParentLogist.ParentNet.Manager.building is LogistCentral)
+                                            && (pipe.ParentLogist.ParentNet.Manager is not null && pipe.ParentLogist.ParentNet.Manager.building is LogistCentral)))
+
+                {
+                    if (ParentLogist.ParentNet.MaxIpNum > pipe.ParentLogist.ParentNet.MaxIpNum)
+                        ParentLogist.ParentNet.Marge(pipe.ParentLogist.ParentNet);
+                    else
+                        pipe.ParentLogist.ParentNet.Marge(ParentLogist.ParentNet);
+                }
+            }
         }
 
         public static KeyValuePair<Sprite, float> GetImageAndAngles(Vector3 position)
@@ -478,6 +529,8 @@ namespace Logist
             }
             return new KeyValuePair<Sprite, float>(sprite, ans);
         }
+
+
 
         private void ChooseImage()
         {

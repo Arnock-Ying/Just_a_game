@@ -15,6 +15,7 @@ namespace Logist
         float stllTime;
         float beginTime;
         InterFace toInter;
+        InterFace baseInter;
         static float speed = 1;
         static int[] step = { 0, 0, -1, 1, 1, -1, 0, 0 };
 
@@ -40,6 +41,7 @@ namespace Logist
             toInter = inter;
 
             transform.position = self.transform.position;
+            baseInter = self;
 
             spr = gameObject.AddComponent<SpriteRenderer>();
             spr.sprite = Manager.LogistManager.PeakageImage(it.id);
@@ -67,8 +69,11 @@ namespace Logist
         {
             if (Time.time - beginTime >= stllTime)
             {
-                toInter.InputItem(item);
-
+                if (!toInter.InputItem(item))
+                {
+                    baseInter.building.Invent.CompelInput(item.id, item.count);
+                    Debug.Log($" {item.id}-{item.count} back! ");
+                }
                 //等待对象池优化
                 Destroy(gameObject);
             }

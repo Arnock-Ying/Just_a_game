@@ -65,9 +65,12 @@ public class BuildingProject : BaseBuilding
         obj.SetActive(true);
         MapManager.SetBuild(transform.position, projecting.size, obj.GetComponent<Block>());
         fin = false;
-
-        //处理物流
         UpdateLoglist();
+        //处理物流
+        //if (obj.GetComponent<Block>() is LogistPipe pipe)
+        //{
+        //    pipe.BuildPipe(true);
+        //}
         //Debug.Log("建造完成");
         Destroy(this.gameObject);
     }

@@ -15,6 +15,7 @@ namespace Logist
         private Router router = new(null);
         private (byte, int)? answer = null;
         private string answerid;
+        public bool action = false;
         public List<Item> asks = null;
         public Router Router { get => router; }
         public byte Ip { get => localip; }
@@ -39,6 +40,7 @@ namespace Logist
         public void SetIP(byte i)
         {
             localip = i;
+            action = true;
         }
 
         private void FixedUpdate()
@@ -60,7 +62,6 @@ namespace Logist
         }
         public void SendRouter()
         {
-            Dircation _dir = (Dircation)((int)dir ^ 1);
             pipe.setRelayRoute(Router.MakeTable(localip, dir), dir);
             pipe.setRelayRouteCommand(LogistCommand.Update, dir);
         }
@@ -166,17 +167,16 @@ namespace Logist
                 if (ParentLogist.ParentNet != null)
                 {
                     //析构有大问题
-                    //ParentLogist.ParentNet.DelIp(this.ParentLogist);
+                    ParentLogist.ParentNet.DelIp(this.ParentLogist);
                     Debug.Log($"del {localip}");
                 }
             building.InterFaces.Remove(this);
             Destroy(this.gameObject);
         }
 
-        public void InputItem(Item item)
+        public bool InputItem(Item item)
         {
-            if (!building.Invent.Input(item.id, item.count))
-                Debug.Log($"Input {item.id} {item.count} Error");
+            return (building.Invent.Input(item.id, item.count));
         }
     }
 }

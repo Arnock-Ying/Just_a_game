@@ -397,11 +397,9 @@ namespace GameBase
                             }
                         if (!threadPause) break;
                     }
-
-
-
                 }
             }
+            Blocks.Clear();
         }
 
         public void UpdataAskQueue(int ip, Item item, int high = 0)
@@ -518,7 +516,7 @@ namespace GameBase
                     }
                 }
             }
-            net.Blocks.Clear();
+            net.threadAlive = false;
             //foreach (var i in Blocks)
             //{
             //    if (i.Inter != null) i.Inter.SendRouter();

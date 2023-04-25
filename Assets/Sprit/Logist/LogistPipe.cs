@@ -20,7 +20,7 @@ namespace Logist
         SpriteRenderer spr;
         LogistNetBlock net;
 
-        Router router = null;
+        public Router router = null;
         ushort[][] temp_rout = new ushort[4][], inter_rout = new ushort[4][];
         LogistCommand[] temp_com = new LogistCommand[4], inter_com = new LogistCommand[4];
 
@@ -47,21 +47,37 @@ namespace Logist
         private void FixedUpdate()
         {
             bool flgchange = false;
+            bool[,] older_resend = new bool[2, 4];
+            for (int i = 0; i < 4; ++i) older_resend[0, i] = older_resend[1, i] = false;
             for (int i = 0; i < 4; ++i)
             {
                 if (temp_com[i] != LogistCommand.Nulldate)
                 {
                     relayRouteCommand(temp_com[i], (Dircation)i);
+                    if (router != null && temp_rout[i] == null) older_resend[0, i] |= router.comresend[i];
                     flgchange = true;
                 }
                 if (temp_rout[i] != null)
                 {
                     relayRoute(temp_rout[i], (Dircation)i);
+                    if (router != null)
+                    {
+                        older_resend[0, i] |= router.comresend[i];
+                        older_resend[1, i] |= router.resend[i];
+                    }
                     flgchange = true;
                 }
 
             }
-            SendRoute();
+            if (router != null)
+            {
+                //for(int i=0;i<4;++i)
+                //{
+                //    router.comresend[i] = older_resend[0, i];
+                //    router.resend[i] = older_resend[1, i];
+                //}
+                SendRoute();
+            }
             for (int j = 0; j < 4; ++j)
             {
                 if (flgchange && router != null)
@@ -150,8 +166,6 @@ namespace Logist
 
         private void SendRoute()
         {
-            if (router == null) return;
-
             for (int i = 0; i < 4; ++i)
             {
                 if (findbuilding[i] != null && router.comresend[i])
@@ -162,6 +176,7 @@ namespace Logist
                         pipe.setRelayRouteCommand(router.command, (Dircation)(i));
                     }
                     else if (findbuilding[i] is InterFace inter) inter.GetCommand(router.command);
+                    router.comresend[i] = false;
                 }
             }
             for (int i = 0; i < 4; ++i)
@@ -174,9 +189,26 @@ namespace Logist
                         pipe.setRelayRoute(router.CopyIpTable(), (Dircation)(i));
                     }
                     else if (findbuilding[i] is InterFace inter) inter.UpdateIp(router.CopyIpTable());
+                    router.resend[i] = false;
                 }
             }
 
+        }
+
+        public void SendCommandImd(LogistCommand command)
+        {
+            for (int i = 0; i < 4; ++i)
+            {
+                if (findbuilding[i] != null)
+                {
+                    if (findbuilding[i] is LogistPipe pipe)
+                    {
+                        Debug.Log(transform.position + $"nouter send command {command} to " + (Dircation)i);
+                        pipe.setRelayRouteCommand(command, (Dircation)(i));
+                    }
+                    else if (findbuilding[i] is InterFace inter) inter.GetCommand(command);
+                }
+            }
         }
 
         public void BuildPipe(bool rebuild, bool relogist = false)
@@ -381,6 +413,7 @@ namespace Logist
             for (int i = 0; i < 4; ++i)
             {
                 if (findbuilding[i] is InterFace inter)
+                {
                     if (this.ParentLogist.Inter != inter)
                         if (inter.ParentLogist != null)
                             ParentLogist.ParentNet.SetIp(inter.ParentLogist);
@@ -391,7 +424,8 @@ namespace Logist
                             this.ParentLogist.ParentNet.Blocks.Add(inter.ParentLogist);
                             this.ParentLogist.ParentNet.SetIp(inter.ParentLogist);
                         }
-
+                    inter.SendRouter();
+                }
             }
 
             //释放合并所产生的垃圾空间

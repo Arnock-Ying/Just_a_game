@@ -80,7 +80,9 @@ namespace GameBase
         public List<InterFace> InterFaces { get; } = new();
         public virtual int Contains(string id)
         {
-            return invent.Contains(id);
+            if (invent != null)
+                return invent.Contains(id);
+            return -1;
         }
 
         public virtual Item PopItem(string id, int count)
@@ -378,6 +380,7 @@ namespace GameBase
             while (threadAlive)
             {
                 //土方法锁线程，待优化
+                //彻底寄了，还是回头重写个锁罢QAQ
                 if (threadPause)
                 {
                     string[] keys = AskQueue.Keys;
@@ -394,11 +397,9 @@ namespace GameBase
                             }
                         if (!threadPause) break;
                     }
-
-
-
                 }
             }
+            Blocks.Clear();
         }
 
         public void UpdataAskQueue(int ip, Item item, int high = 0)
@@ -411,12 +412,12 @@ namespace GameBase
             threadPause = true;
         }
 
-        public void PushAskQueue(int ip, Item item, int high = 0)
+        public void PushAskQueue(int ip, string id, int num, int high = 0)
         {
             threadPause = false;
 
 
-            AskQueue.UpdataAsk(ip, item, high);
+            AskQueue.PushAsk(ip, id, num, high);
 
             threadPause = true;
         }
@@ -458,6 +459,7 @@ namespace GameBase
 
             builds[min] = block;
             block.Inter.SetIP((byte)min);
+            block.Inter.Router.Clear();
             count += 1;
             Debug.Log(ToString());
             return true;
@@ -504,13 +506,21 @@ namespace GameBase
                     Blocks.Add(i);
                     i.ParentNet = this;
                     this.SetIp(i);
+                    foreach (var p in i.pipes)
+                    {
+                        if (p.router != null)
+                        {
+                            p.router.Clear();
+                            p.SendCommandImd(LogistCommand.Newdate);
+                        }
+                    }
                 }
             }
-            net.Blocks.Clear();
-            foreach (var i in Blocks)
-            {
-                if (i.Inter != null) i.Inter.SendRouter();
-            }
+            net.threadAlive = false;
+            //foreach (var i in Blocks)
+            //{
+            //    if (i.Inter != null) i.Inter.SendRouter();
+            //}
 
             //for (int i = 0; i < maxIpNum; ++i)
             //{
@@ -555,7 +565,7 @@ namespace GameBase
     {
         public readonly int id;
         static int nowid = 0;
-        readonly List<LogistPipe> pipes = new();
+        public readonly List<LogistPipe> pipes = new();
         public LogistNet ParentNet { get; set; } = new();
         public int Count { get => pipes.Count; }
         public InterFace Inter { get; set; } = null;

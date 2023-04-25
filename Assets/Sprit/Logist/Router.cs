@@ -179,6 +179,7 @@ namespace Logist
         }
         public void Clear()
         {
+            newone = true;
             for (int i = 0; i < 256; ++i)
                 vs[i] = 0;
         }

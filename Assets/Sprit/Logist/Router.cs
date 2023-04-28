@@ -11,7 +11,7 @@ namespace Logist
         Left,
         Right,
     }
-    
+
     public class Router
     {
 
@@ -69,14 +69,13 @@ namespace Logist
             int dir = (int)_dir ^ 1;
             for (int i = 0; i < 256; ++i)
             {
-                if (ipTable[i] == (ushort)0xFFFF && vs[i] != 0)
+                if ((ipTable[i] >> 2) == 0 && vs[i] != 0 && (vs[i] & 3) == dir)
                 {
-                    if ((vs[i] & 3) == dir)
-                        vs[i] = 0;
-                    else
-                        rechange = false;
+                    vs[i] = 0;
+                    rechange = false;
                 }
-                if ((((ipTable[i] >> 2) < (vs[i] >> 2)) || (vs[i] >> 2) == 0) && (ipTable[i] >> 2) != 0)
+                if ((((ipTable[i] >> 2) < (vs[i] >> 2)) || (vs[i] >> 2) == 0 || (vs[i] & 3) == dir )
+                    && (ipTable[i] >> 2) != 0)
                 {
                     vs[i] = (ushort)(((ipTable[i] >> 2) << 2) | dir);
                     Debug.Log($"pi:{i},dir:{Dir((byte)i)},len:{Len((byte)i)}");
@@ -189,13 +188,19 @@ namespace Logist
             vs[ip] = (ushort)((len << 2) | ((int)dir & 3));
             return vs;
         }
-
+        public static ushort[] MakeDeleteTable()
+        {
+            ushort[] vs = new ushort[256];
+            for (int i = 0; i < 256; ++i)
+                vs[i] = 0;
+            return vs;
+        }
 
         public override string ToString()
         {
             string str = "";
             for (byte i = 0; i < 8; ++i)
-                str += $"ip: {i}, dir: {Dir(i)}, len: {Len(i)}\n";
+                str += $"ip: {i}, {(vs[i] == 0 ? " router null " : $"dir: {Dir(i)}, len: {Len(i)}")}\n";
             return str;
         }
 
@@ -203,7 +208,7 @@ namespace Logist
         {
             string str = "";
             for (byte i = 0; i < 8; ++i)
-                str += $"ip: {i}, dir: {(Dircation)(vs[i] & 3)}, len: {vs[i] >> 2}\n";
+                str += $"ip: {i}, {(vs[i] == 0 ? " router null " : $"dir: {(Dircation)(vs[i] & 3)}, len: {vs[i] >> 2}")}\n";
             return str;
         }
 

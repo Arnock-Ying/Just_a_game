@@ -65,7 +65,11 @@ namespace Logist
             pipe.setRelayRoute(Router.MakeTable(localip, dir), dir);
             pipe.setRelayRouteCommand(LogistCommand.Update, dir);
         }
-
+        public void SendDeleteRouter()
+        {
+            pipe.setRelayRoute(Router.MakeDeleteTable(), dir);
+            pipe.setRelayRouteCommand(LogistCommand.Outdate, dir);
+        }
         public void GetCommand(LogistCommand command)
         {
             Debug.Log(transform.position + " input " + command);
@@ -167,6 +171,7 @@ namespace Logist
                 if (ParentLogist.ParentNet != null)
                 {
                     //析构有大问题
+                    SendDeleteRouter();
                     ParentLogist.ParentNet.DelIp(this.ParentLogist);
                     Debug.Log($"del {localip}");
                 }

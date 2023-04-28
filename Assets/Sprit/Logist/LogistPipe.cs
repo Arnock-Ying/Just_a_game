@@ -114,8 +114,7 @@ namespace Logist
             if (router != null)
             {
                 debug += $"router {parentLogist.ParentNet.MaxIpNum} {(router.newone ? "new one" : "")}:\n";
-                for (byte i = 0; i < parentLogist.ParentNet.MaxIpNum; ++i)
-                    debug += $"ip: {i}, dir: {router.Dir(i)}, len: {router.Len(i)}\n";
+                debug += router.ToString();
             }
         }
 
